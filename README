@@ -4,3 +4,5 @@ The first (functional but for level loading) commit was completed in under 24 ho
 
 Level loading is working .. plan to add a map
 The first line in level.lvl is the floor, which defines the level's bounds (entity level objects wrap to level bounds - a 128px margin)
+
+Includes implementation of HUMP camera and vector from https://github.com/vrld/hump
