@@ -91,7 +91,6 @@ local w = {
 w.c.objectclass = {
 	collide = function(this, target)
 		target = target or 'none'
-		-- assumes that platform.w >= player.w, and no overlapping objects
 		for i, obj in ipairs(world.objects) do
 			if obj ~= this and ((type(target) == 'string' and (target == 'none' or obj.type == target)) or (type(target) == 'table' and obj == target)) then
 				-- print('check '..this.type..' for '..target)
@@ -115,7 +114,15 @@ w.c.objectclass = {
 		if img[this.img] then
 			local x = 0
 			while x < this.p.w do
-				love.graphics.draw(img[this.img], this.p.x + x, this.p.y)
+				if this.v then
+					if this.v.x < 0 then this.s = 1 end
+					if this.v.x > 0 then this.s = -1 end
+				end
+				if this.s < 0 then
+					love.graphics.draw(img[this.img], (this.p.x + this.p.w) + x, this.p.y, 0, -1, 1)
+				else
+					love.graphics.draw(img[this.img], this.p.x + x, this.p.y)
+				end
 				x = x + img[this.img]:getWidth()
 			end
 		else
@@ -125,7 +132,7 @@ w.c.objectclass = {
 }
 -- object inherits nothing
 w.c.object = function(proto)
-	local obj = {img = nil, p = {x = 0, y = 0, h = 0, w = 0}}
+	local obj = {img = nil, p = {x = 0, y = 0, h = 0, w = 0}, s = 1}
 	if type(proto) == 'table' then
 		for k, v in pairs(proto) do
 			obj[k] = v
@@ -206,7 +213,7 @@ w.c.effectclass = {
 		if this.v.y < world.gravity then
 			this.v.y = math.min(this.v.y + (world.gravity * dt), world.gravity)
 		end
-		-- friction
+		-- resistance
 		if this.v.x > 0 then
 			this.v.x = math.max(this.v.x - (world.gravity * dt), 0)
 		end
@@ -347,9 +354,9 @@ w.c.physicsclass = {
 		end
 		-- gravity
 		if not this.carrier and this.v.y < world.gravity then
-			this.v.y = math.min(this.v.y + (world.gravity * dt), world.gravity)
+			this.v.y = math.min(this.v.y + (world.gravity * dt), world.gravity) * this.mass
 		end
-		-- friction
+		-- resistance
 		if this.v.x > 0 then
 			this.v.x = math.max(this.v.x - (world.gravity * dt), 0)
 		end
@@ -370,6 +377,7 @@ setmetatable(w.c.physicsclass, {__index = w.c.objectclass})
 w.c.physicsobject = function(proto)
 	proto = proto or {}
 	proto.v = proto.v or {x = 0, y = 0}
+	proto.mass = proto.mass or 1
 	local obj = w.c.object(proto)
 	return setmetatable(obj, {__index = w.c.physicsclass})
 end

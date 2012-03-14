@@ -58,8 +58,10 @@ local state = {
 			-- load
 			local button = this.gui:element(this.gui:button('Continue', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 128, w = 256, h = 16}))
 			button.click = function(this)
-				state.level = state.load.levels.value
-				state.current = 'world'
+				if state.load.levels.value then
+					state.level = state.load.levels.value
+					state.current = 'world'
+				end
 			end
 			-- prefs
 			button = this.gui:element(this.gui:button('Prefs', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 96, w = 256, h = 16}))
@@ -89,6 +91,9 @@ local state = {
 			love.graphics.draw(this.backdrop, 0, 0)
 			this.gui:draw()
 		end,
+	},
+	map = {
+		
 	},
 	world = {
 		dt = 0,
