@@ -24,7 +24,7 @@ local w = {
 			end
 		end
 	end,
-	load = function(this)
+	load = function(this, level)
 		
 		--for i, line in love.filesystem.lines('level/level1.lvl') do
 		--	local type, obj = line:find(' ', 1)

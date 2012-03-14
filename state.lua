@@ -85,12 +85,14 @@ local state = {
 	world = {
 		dt = 0,
 		load = function(this)
-			this.gui = gui:new()
-			world:load()
+			if not this.gui then
+				this.gui = gui:new()
+			end
+			world:load(state.level)
 		end,
 		update = function(this, dt)
 			this.dt = dt
-			if not this.gui then this:load() end
+			if not world.objects[1] then this:load() end
 			world:update(dt)
 			this.gui:update(dt)
 		end,

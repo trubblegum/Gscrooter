@@ -1,6 +1,6 @@
 state = require('state')
 gui = require('Gspot')
-world = require('Gplate')
+world = require('Gscrooter')
 
 img = {}
 
