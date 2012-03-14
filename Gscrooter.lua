@@ -25,29 +25,23 @@ local w = {
 		end
 	end,
 	load = function(this, level)
-		
-		--for i, line in love.filesystem.lines('level/level1.lvl') do
-		--	local type, obj = line:find(' ', 1)
-		--	if this.c[type] then
-		--		obj = assert(obj)
-		--		this.c[type](obj)
-		--	end
-		--end
-		
-		-- level
-		table.insert(this.objects, this.c.platform({p = {x = -128, y = 0, w = 4096, h = 0}, img = 'platform4.png'}))
-		table.insert(this.objects, this.c.platform({p = {x = 256, y = -128, w = 0, h = 0}, img = 'platform2.png'}))
-		table.insert(this.objects, this.c.platform({p = {x = 128, y = -256, w = 0, h = 0}, img = 'platform1.png'}))
-		table.insert(this.objects, this.c.platform({p = {x = 360, y = -256, w = 0, h = 0}, img = 'platform4.png'}))
-		table.insert(this.objects, this.c.platform({p = {x = 720, y = -192, w = 0, h = 0}, img = 'platform2.png'}))
-		
-		table.insert(this.objects, this.c.spawn({p = {x = 640, y = -128}}))
-		-- /level
-		
+		if love.filesystem.exists('level/'..level) then
+			for line in love.filesystem.lines('level/'..level) do
+				local i = line:find(' ', 1)
+				if i then
+					local def = line:sub(1, i - 1)
+					local obj = line:sub(i + 1)
+					print('def = "'..def..'" obj = "'..obj..'"')
+					if this.c[def] then
+						obj = loadstring('return '..obj)
+						table.insert(this.objects, this.c[def](obj()))
+					end
+				end
+			end
+		end
 		this.player = this.c.player()
 		table.insert(this.objects, this.player)
-		
-		this.ctrl = { -- do this after setting global player
+		this.ctrl = {
 			{key = 'a', cmd = this.player.left},
 			{key = 'd', cmd = this.player.right},
 			{key = 'w', cmd = this.player.jump},

@@ -58,6 +58,7 @@ local state = {
 			-- load
 			local button = this.gui:element(this.gui:button('Continue', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 128, w = 256, h = 16}))
 			button.click = function(this)
+				state.level = state.load.levels.value
 				state.current = 'world'
 			end
 			-- prefs
@@ -71,6 +72,13 @@ local state = {
 			button.click = function(this)
 				state.current = 'menu'
 			end
+			-- levels
+			this.levels = this.gui:element(this.gui:scrollgroup('Select Level', {x = 256, y = 64, w = love.graphics.getWidth() - 512, h = 256}))
+			files = love.filesystem.enumerate('/level')
+			for i, file in ipairs(files) do
+				option = this.gui:element(this.gui:option(file, {x = 0, y = this.levels.maxh, w = this.levels.pos.w, h = 16}, file, this.levels.id))
+			end
+			
 			this.backdrop = love.graphics.newImage('gui/load.png')
 		end,
 		update = function(this, dt)
