@@ -1,3 +1,6 @@
 Gscrooter is a super awesome platform shooter for LÖVE, inpired by Gewter (see https://github.com/trubblegum/Gspot), but rebuilt from the ground up.
 
 The first (functional but for level loading) commit was completed in under 24 hours :)
+
+Level loading is working .. plan to add a map
+The first line in level.lvl is the floor, which defines the level's bounds (entity level objects wrap to level bounds - a 128px margin)
