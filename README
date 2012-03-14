@@ -1,8 +1,18 @@
-Gscrooter is a super awesome platform shooter for LÖVE, inpired by Gewter (see https://github.com/trubblegum/Gspot), but rebuilt from the ground up.
+Gscrooter is a super awesome platform shooter for LÖVE, inpired by Gewter (see below), but rebuilt from the ground up.
 
-The first (functional but for level loading) commit was completed in under 24 hours :)
+Kill the stuff! Count the hoppers! Protect your tree! Survive! Make your own levels! And more! (not really .. that's all for now)
 
-Level loading is working .. plan to add a map
-The first line in level.lvl is the floor, which defines the level's bounds (entity level objects wrap to level bounds - a 128px margin)
+The first commit was completed in under 24 hours :)
 
-Includes implementation of HUMP camera and vector from https://github.com/vrld/hump
+The first line in level.lvl is the floor, which defines the level's bounds (entity level objects wrap to level bounds)
+Object defs in level1.lvl are minimal, but you can customize any object by adding attributes to the prototype
+Some example objects :
+- platform {p = {x = 0, y = 0, w = 128, h = 0}}
+- healtree {p = {x = 0, y = 0}, healing = 8}
+- hopper {{p = {x = 0, y = 128}, hp = 100, damage = 64}
+- hopperspawn {}
+- buzzer {}
+- buzzerspawn {}
+
+Includes an implementation of HUMP camera and vector from https://github.com/vrld/hump
+Includes an implementation of Gspot from https://github.com/trubblegum/Gspot
