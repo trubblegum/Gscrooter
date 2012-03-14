@@ -67,7 +67,8 @@ local w = {
 		end
 	end,
 	draw = function(this, dt)
-		this.cam.pos = vector((this.player.p.x + this.player.p.w) - (this.player.v.x * dt), (this.player.p.y + this.player.p.h) - (this.player.v.y * dt))
+		local ground = this.objects[1]
+		this.cam.pos = vector(math.min(math.max((this.player.p.x + (this.player.p.w / 2)) - (this.player.v.x * dt), ground.p.x + (love.graphics.getWidth() / 2)), (ground.p.x + ground.p.w) - (love.graphics.getWidth() / 2)), (this.player.p.y + this.player.p.h) - (this.player.v.y * dt))
 		this.cam:attach()
 		for i, obj in ipairs(this.objects) do
 			obj:draw()
@@ -357,11 +358,11 @@ w.c.physicsclass = {
 		end
 		--wrap
 		local ground = world.objects[1]
-		if this.p.x < ground.p.x + 128 then
-			this.p.x = ((ground.p.x + ground.p.w) - 128) - this.p.w
+		if this.p.x < ground.p.x then
+			this.p.x = (ground.p.x + ground.p.w) - this.p.w
 		end
-		if this.p.x + this.p.w > (ground.p.x + ground.p.w) - 128 then
-			this.p.x = ground.p.x + 128
+		if this.p.x + this.p.w > ground.p.x + ground.p.w then
+			this.p.x = ground.p.x
 		end
 	end,
 }
@@ -459,7 +460,7 @@ w.c.healtree = function(proto)
 	proto.type = 'friendly'
 	proto.img = proto.img or 'healtree.png'
 	proto.heal = proto.heal or 8
-	proto.updateinterval = proto.updateinterval or 1
+	proto.updateinterval = proto.updateinterval or 2
 	proto.updateclock = proto.updateclock or 1
 	local obj = w.c.entity(proto)
 	return setmetatable(obj, {__index = w.c.healtreeclass})
