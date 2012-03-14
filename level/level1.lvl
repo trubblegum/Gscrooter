@@ -1,7 +1,9 @@
-platform {p = {x = -128, y = 0, w = 2048, h = 0}, img = 'platform4.png'}
+platform {p = {x = 0, y = 0, w = 2048, h = 0}, img = 'platform4.png'}
 platform {p = {x = 256, y = -128, w = 0, h = 0}, img = 'platform2.png'}
 platform {p = {x = 128, y = -256, w = 0, h = 0}, img = 'platform1.png'}
 platform {p = {x = 360, y = -256, w = 0, h = 0}, img = 'platform4.png'}
 platform {p = {x = 720, y = -192, w = 0, h = 0}, img = 'platform2.png'}
 		
 spawn {p = {x = 640, y = -128}}
+
+healtree {p = {x = 1024, y = -128, w = 0, h = 0}}

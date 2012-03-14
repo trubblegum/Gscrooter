@@ -251,6 +251,44 @@ w.c.hit = function(proto)
 	return setmetatable(obj, {__index = w.c.hitclass})
 end
 
+w.c.healclass = {
+}
+setmetatable(w.c.healclass, {__index = w.c.hitclass})
+w.c.heal = function(proto)
+	proto = proto or {}
+	proto.img = proto.img or 'heal.png'
+	proto.scale = proto.scale or 0.2
+	local obj = w.c.hit(proto)
+	return setmetatable(obj, {__index = w.c.hitclass})
+end
+
+w.c.AOEhealclass = {
+	update = function(this, dt)
+		this.scale = this.scale + (dt * 2)
+		this.alpha = this.alpha - (255 * dt)
+		if this.alpha <= 0 then
+			world:remeffect(this)
+			return
+		end
+		this.target = this:collide('player')
+		if this.target then
+			if this.target.hp then
+				this.target.hp = math.min(this.target.hp + (this.heal * dt), this.target.ohp)
+			end
+		end
+		w.c.effectclass.update(this, dt)
+	end,
+}
+setmetatable(w.c.AOEhealclass, {__index = w.c.hitclass})
+w.c.AOEheal = function(proto)
+	proto = proto or {}
+	proto.img = proto.img or 'heal.png'
+	proto.heal = proto.heal or 8
+	proto.scale = proto.scale or 1
+	local obj = w.c.hit(proto)
+	return setmetatable(obj, {__index = w.c.AOEhealclass})
+end
+
 w.c.deathclass = {
 	update = function(this, dt)
 		this.alpha = this.alpha - (128 * dt)
@@ -318,11 +356,12 @@ w.c.physicsclass = {
 			this.v.x = math.min(this.v.x + (world.gravity * dt), 0)
 		end
 		--wrap
-		if this.p.x < world.objects[1].p.x + 128 then
-			this.p.x = (world.objects[1].p.x + world.objects[1].p.w) - 128
+		local ground = world.objects[1]
+		if this.p.x < ground.p.x + 128 then
+			this.p.x = ((ground.p.x + ground.p.w) - 128) - this.p.w
 		end
-		if this.p.x > world.objects[1].p.w - 128 then
-			this.p.x = world.objects[1].p.x + 128
+		if this.p.x + this.p.w > (ground.p.x + ground.p.w) - 128 then
+			this.p.x = ground.p.x + 128
 		end
 	end,
 }
@@ -378,7 +417,7 @@ end
 w.c.playerclass = {
 	update = function(this, dt)
 		if this.hp < this.ohp then
-			this.hp = math.min(this.hp + (dt * 4), this.ohp)
+			--this.hp = math.min(this.hp + (dt * 4), this.ohp)
 		end
 		w.c.entityclass.update(this, dt)
 	end,
@@ -394,6 +433,36 @@ w.c.player = function(proto)
 	proto.img = 'player.png'
 	local obj = w.c.entity(proto)
 	return setmetatable(obj, {__index = w.c.playerclass})
+end
+
+w.c.healtreeclass = {
+	update = function(this, dt)
+		if this.updateclock > this.updateinterval then
+			this.updateclock = 0
+			
+			table.insert(world.effects, w.c.AOEheal({p = {x = this.p.x + (this.p.w / 2), y = this.p.y}, v = {x = (math.random() * 512) - 256, y = 0}, heal = this.heal}))
+		else
+			this.updateclock = this.updateclock + dt
+		end
+		w.c.entityclass.update(this, dt)
+	end,
+	left = function(this, dt)
+		this.v.x = 0 - this.speed
+	end,
+	right = function(this, dt)
+		this.v.x = this.speed
+	end,
+}
+setmetatable(w.c.healtreeclass, {__index = w.c.entityclass})
+w.c.healtree = function(proto)
+	proto = proto or {}
+	proto.type = 'friendly'
+	proto.img = proto.img or 'healtree.png'
+	proto.heal = proto.heal or 8
+	proto.updateinterval = proto.updateinterval or 1
+	proto.updateclock = proto.updateclock or 1
+	local obj = w.c.entity(proto)
+	return setmetatable(obj, {__index = w.c.healtreeclass})
 end
 
 w.c.enemyclass = {
