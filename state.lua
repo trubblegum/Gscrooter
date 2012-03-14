@@ -56,7 +56,7 @@ local state = {
 		load = function(this)
 			this.gui = gui:new(this)
 			-- load
-			local button = this.gui:element(this.gui:button('Continue', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 128, w = 256, h = 16}))
+			local button = this.gui:element(this.gui:button('Load', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 128, w = 256, h = 16}))
 			button.click = function(this)
 				if state.load.levels.value then
 					state.level = state.load.levels.value
@@ -69,8 +69,8 @@ local state = {
 				state.prev = state.current
 				state.current = 'prefs'
 			end
-			-- quit
-			button = this.gui:element(this.gui:button('Main', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 64, w = 256, h = 16}))
+			-- menu
+			button = this.gui:element(this.gui:button('Menu', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 64, w = 256, h = 16}))
 			button.click = function(this)
 				state.current = 'menu'
 			end
@@ -100,6 +100,11 @@ local state = {
 		load = function(this)
 			if not this.gui then
 				this.gui = gui:new()
+				-- menu
+				button = this.gui:element(this.gui:button('Menu', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 32, w = 256, h = 16}))
+				button.click = function(this)
+					state.current = 'menu'
+				end
 			end
 			world:load(state.level)
 		end,

@@ -281,7 +281,7 @@ w.c.AOEhealclass = {
 		this.target = this:collide('player')
 		if this.target then
 			if this.target.hp then
-				this.target.hp = math.min(this.target.hp + (this.heal * dt), this.target.ohp)
+				this.target.hp = math.min(this.target.hp + (this.healing * dt), this.target.ohp)
 			end
 		end
 		w.c.effectclass.update(this, dt)
@@ -291,10 +291,37 @@ setmetatable(w.c.AOEhealclass, {__index = w.c.hitclass})
 w.c.AOEheal = function(proto)
 	proto = proto or {}
 	proto.img = proto.img or 'heal.png'
-	proto.heal = proto.heal or 8
+	proto.healing = proto.healing or 8
 	proto.scale = proto.scale or 1
 	local obj = w.c.hit(proto)
 	return setmetatable(obj, {__index = w.c.AOEhealclass})
+end
+
+w.c.enemyAOEhealclass = {
+	update = function(this, dt)
+		this.scale = this.scale + (dt * 2)
+		this.alpha = this.alpha - (255 * dt)
+		if this.alpha <= 0 then
+			world:remeffect(this)
+			return
+		end
+		this.target = this:collide('enemy')
+		if this.target then
+			if this.target.hp then
+				this.target.hp = math.min(this.target.hp + (this.healing * dt), this.target.ohp)
+			end
+		end
+		w.c.effectclass.update(this, dt)
+	end,
+}
+setmetatable(w.c.enemyAOEhealclass, {__index = w.c.hitclass})
+w.c.enemyAOEheal = function(proto)
+	proto = proto or {}
+	proto.img = proto.img or 'heal.png'
+	proto.healing = proto.healing or 8
+	proto.scale = proto.scale or 1
+	local obj = w.c.hit(proto)
+	return setmetatable(obj, {__index = w.c.enemyAOEhealclass})
 end
 
 w.c.deathclass = {
@@ -302,6 +329,7 @@ w.c.deathclass = {
 		this.alpha = this.alpha - (128 * dt)
 		if this.alpha <= 0 then
 			if this.type == 'player' then
+				world:unload()
 				state.current = 'load'
 			end
 			world:remeffect(this)
@@ -353,8 +381,13 @@ w.c.physicsclass = {
 			end
 		end
 		-- gravity
-		if not this.carrier and this.v.y < world.gravity then
-			this.v.y = math.min(this.v.y + (world.gravity * dt), world.gravity) * this.mass
+		if not this.carrier then
+			if this.v.y < world.gravity * this.mass then
+				this.v.y = math.min(this.v.y + (world.gravity * dt), world.gravity * this.mass)
+			end
+			if this.v.y > world.gravity * this.mass then
+				this.v.y = math.max(this.v.y - (world.gravity * dt), world.gravity * this.mass)
+			end
 		end
 		-- resistance
 		if this.v.x > 0 then
@@ -386,7 +419,7 @@ end
 w.c.entityclass = {
 	update = function(this, dt)
 		if this.hp <= 0 then
-			table.insert(world.effects, w.c.death({p = this.p, img = this.img}))
+			table.insert(world.effects, w.c.death(this))
 			world:remobject(this)
 			return
 		end
@@ -419,6 +452,8 @@ w.c.entity = function(proto)
 	proto.ohp = proto.hp or 100
 	proto.hp = proto.hp or proto.ohp
 	proto.speed = proto.speed or 256
+	proto.updateinterval = proto.updateinterval or 4
+	proto.updateclock = proto.updateclock or 0
 	local obj = w.c.physicsobject(proto)
 	return setmetatable(obj, {__index = w.c.entityclass})
 end
@@ -448,18 +483,14 @@ w.c.healtreeclass = {
 	update = function(this, dt)
 		if this.updateclock > this.updateinterval then
 			this.updateclock = 0
-			
-			table.insert(world.effects, w.c.AOEheal({p = {x = this.p.x + (this.p.w / 2), y = this.p.y}, v = {x = (math.random() * 512) - 256, y = 0}, heal = this.heal}))
+			this:heal()
 		else
 			this.updateclock = this.updateclock + dt
 		end
 		w.c.entityclass.update(this, dt)
 	end,
-	left = function(this, dt)
-		this.v.x = 0 - this.speed
-	end,
-	right = function(this, dt)
-		this.v.x = this.speed
+	heal = function(this)
+		table.insert(world.effects, w.c.AOEheal({p = {x = this.p.x + (this.p.w / 2), y = this.p.y}, v = {x = (math.random() * 512) - 256, y = 0}, healing = this.healing}))
 	end,
 }
 setmetatable(w.c.healtreeclass, {__index = w.c.entityclass})
@@ -467,7 +498,7 @@ w.c.healtree = function(proto)
 	proto = proto or {}
 	proto.type = 'friendly'
 	proto.img = proto.img or 'healtree.png'
-	proto.heal = proto.heal or 8
+	proto.healing = proto.healing or 8
 	proto.updateinterval = proto.updateinterval or 2
 	proto.updateclock = proto.updateclock or 1
 	local obj = w.c.entity(proto)
@@ -476,25 +507,11 @@ end
 
 w.c.enemyclass = {
 	update = function(this, dt)
-		if this.updateclock > this.updateinterval then
-			this.updateclock = 0
-			local action = math.random() * 5
-			if action < 2 then
-				this:jump()
-			elseif action < 4 then
-				this:left()
-			elseif action < 5 then
-				this:right()
-			else
-				-- yeah, right
-			end
-		else
-			local target = this:collide('player')
-			if target then
-				target.hp = target.hp - (this.damage * dt)
-			end
-			this.updateclock = this.updateclock + dt
+		local target = this:collide('player')
+		if target then
+			target.hp = target.hp - (this.damage * dt)
 		end
+		this.updateclock = this.updateclock + dt
 		w.c.entityclass.update(this, dt)
 	end,
 	left = function(this, dt)
@@ -508,7 +525,7 @@ setmetatable(w.c.enemyclass, {__index = w.c.entityclass})
 w.c.enemy = function(proto)
 	proto = proto or {}
 	proto.type = 'enemy'
-	proto.img = proto.img or 'enemy1.png'
+	proto.img = proto.img or 'enemy.png'
 	proto.damage = proto.damage or 32
 	proto.updateinterval = proto.updateinterval or 1
 	proto.updateclock = proto.updateclock or 1
@@ -516,37 +533,145 @@ w.c.enemy = function(proto)
 	return setmetatable(obj, {__index = w.c.enemyclass})
 end
 
-w.c.spawnclass = {
+w.c.hopperclass = {
 	update = function(this, dt)
 		if this.updateclock > this.updateinterval then
 			this.updateclock = 0
-			if this.hp < this.ohp then
-				this.hp = this.ohp
+			local action = math.random() * 5
+			if action < 2 then
+				this:jump()
+			elseif action < 4 then
+				this:left()
+			elseif action < 5 then
+				this:right()
 			else
-				table.insert(world.objects, w.c.enemy({p = {x = this.p.x, y = this.p.y}}))
+				-- yeah, right
 			end
-		else
-			-- need enemy class
-			local target = this:collide('player')
-			if target then
-				target.hp = target.hp - (this.damage * dt)
-			end
-			this.updateclock = this.updateclock + dt
 		end
-		w.c.entityclass.update(this, dt)
+		w.c.enemyclass.update(this, dt)
+	end,
+	left = function(this, dt)
+		this.v.x = 0 - this.speed
+	end,
+	right = function(this, dt)
+		this.v.x = this.speed
 	end,
 }
-setmetatable(w.c.spawnclass, {__index = w.c.entityclass})
-w.c.spawn = function(proto)
+setmetatable(w.c.hopperclass, {__index = w.c.enemyclass})
+w.c.hopper = function(proto)
 	proto = proto or {}
-	proto.type = 'enemy'
-	proto.img = proto.img or 'spawn1.png'
+	proto.img = proto.img or 'hopper.png'
+	proto.damage = proto.damage or 32
+	proto.updateinterval = proto.updateinterval or 1
+	proto.updateclock = proto.updateclock or 1
+	local obj = w.c.enemy(proto)
+	return setmetatable(obj, {__index = w.c.hopperclass})
+end
+
+w.c.hopperspawnclass = {
+	update = function(this, dt)
+		if this.updateclock > this.updateinterval then
+			this.updateclock = 0
+			local action = math.random() * 3
+			if action < 1 then
+				this:heal()
+			elseif action < 3 then
+				this:spawn()
+			else
+				-- yeah, right
+			end
+		end
+		w.c.enemyclass.update(this, dt)
+	end,
+	heal = function(this)
+		table.insert(world.effects, w.c.enemyAOEheal({p = {x = this.p.x + (this.p.w / 2), y = this.p.y}, v = {x = (math.random() * 512) - 256, y = 0}, healing = this.healing}))
+	end,
+	spawn = function(this)
+		table.insert(world.objects, w.c.hopper({p = {x = this.p.x, y = this.p.y}}))
+	end
+}
+setmetatable(w.c.hopperspawnclass, {__index = w.c.enemyclass})
+w.c.hopperspawn = function(proto)
+	proto = proto or {}
+	proto.img = proto.img or 'hopperspawn.png'
 	proto.hp = proto.hp or 500
 	proto.damage = proto.damage or 16
 	proto.updateinterval = proto.updateinterval or 8
 	proto.updateclock = proto.updateclock or 6
-	local obj = w.c.entity(proto)
-	return setmetatable(obj, {__index = w.c.spawnclass})
+	local obj = w.c.enemy(proto)
+	return setmetatable(obj, {__index = w.c.hopperspawnclass})
+end
+
+w.c.buzzerclass = {
+	update = function(this, dt)
+		if this.updateclock > this.updateinterval then
+			this.updateclock = 0
+			local action = math.random() * 5
+			if action < 1 then
+				this:dive()
+			elseif action < 3 then
+				this:left()
+			elseif action < 5 then
+				this:right()
+			else
+				-- yeah, right
+			end
+		end
+		w.c.enemyclass.update(this, dt)
+	end,
+	dive = function(this)
+		this.v.y = this.speed * 2
+	end,
+	left = function(this, dt)
+		this.v.x = 0 - this.speed
+		this.v.y = 0 - this.speed
+	end,
+	right = function(this, dt)
+		this.v.x = this.speed
+		this.v.y = 0 - this.speed
+	end,
+}
+setmetatable(w.c.buzzerclass, {__index = w.c.enemyclass})
+w.c.buzzer = function(proto)
+	proto = proto or {}
+	proto.img = proto.img or 'buzzer.png'
+	proto.mass = proto.mass or 0.5
+	proto.hp = proto.hp or 32
+	proto.updateinterval = proto.updateinterval or 0.5
+	local obj = w.c.enemy(proto)
+	return setmetatable(obj, {__index = w.c.buzzerclass})
+end
+
+w.c.buzzerspawnclass = {
+	update = function(this, dt)
+		if this.updateclock > this.updateinterval then
+			this.updateclock = 0
+			local action = math.random() * 5
+			if action < 1 then
+				this:spawn()
+			elseif action < 3 then
+				this:left()
+			elseif action < 5 then
+				this:right()
+			else
+				-- yeah, right
+			end
+		end
+		w.c.enemyclass.update(this, dt)
+	end,
+	spawn = function(this)
+		table.insert(world.objects, w.c.buzzer({p = {x = this.p.x, y = this.p.y}}))
+	end,
+}
+setmetatable(w.c.buzzerspawnclass, {__index = w.c.buzzerclass})
+w.c.buzzerspawn = function(proto)
+	proto = proto or {}
+	proto.img = proto.img or 'buzzerspawn.png'
+	proto.mass = proto.mass or 0.1
+	proto.hp = proto.hp or 500
+	proto.updateinterval = proto.updateinterval or 2
+	local obj = w.c.enemy(proto)
+	return setmetatable(obj, {__index = w.c.buzzerspawnclass})
 end
 
 return w
