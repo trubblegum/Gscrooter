@@ -1,3 +1,3 @@
-Gscrooter is a super awesome platform shooter, inpired by Gewter, but rebuilt from the ground up.
+Gscrooter is a super awesome platform shooter for LÖVE, inpired by Gewter (see https://github.com/trubblegum/Gspot), but rebuilt from the ground up.
 
-The first commit was completed in under 24 hours :)
+The first (functional but for level loading) commit was completed in under 24 hours :)
