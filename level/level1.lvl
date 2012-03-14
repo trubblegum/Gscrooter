@@ -4,7 +4,8 @@ platform {p = {x = 128, y = -256}, img = 'platform1.png'}
 platform {p = {x = 360, y = -256}, img = 'platform4.png'}
 platform {p = {x = 720, y = -192}, img = 'platform2.png'}
 		
-spawn {p = {x = 640, y = -128}}
-spawn {p = {x = 1792, y = -128}}
+hopperspawn {p = {x = 640, y = -128}}
+hopperspawn {p = {x = 1792, y = -128}}
+buzzerspawn {p = {x = 1024, y = -256}}
 
 healtree {p = {x = 1024, y = -128}}
