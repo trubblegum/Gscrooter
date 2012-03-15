@@ -25,17 +25,18 @@ local w = {
 			end
 		end
 	end,
-	load = function(this, level)
-		if love.filesystem.exists('level/'..level) then
-			for line in love.filesystem.lines('level/'..level) do
+	load = function(this, levelfile)
+		if love.filesystem.exists(levelfile) then
+			for line in love.filesystem.lines(levelfile) do
 				local i = line:find(' ', 1)
 				if i then
 					local def = line:sub(1, i - 1)
 					local obj = line:sub(i + 1)
-					print('def = "'..def..'" obj = "'..obj..'"')
+					--print('def = "'..def..'" obj = "'..obj..'"')
 					if this.c[def] then
 						obj = loadstring('return '..obj)
-						table.insert(this.objects, this.c[def](obj()))
+						obj = obj()
+						table.insert(this.objects, this.c[def](obj))
 					end
 				end
 			end
@@ -46,6 +47,7 @@ local w = {
 			{key = 'a', cmd = this.player.left},
 			{key = 'd', cmd = this.player.right},
 			{key = 'w', cmd = this.player.jump},
+			{key = 's', cmd = this.player.use},
 		}
 	end,
 	unload = function(this)
@@ -136,12 +138,15 @@ w.c.objectclass = {
 }
 -- object inherits nothing
 w.c.object = function(proto)
-	local obj = {img = nil, p = {x = 0, y = 0, h = 0, w = 0}, s = 1}
+	local obj = {img = nil, p = {x = 0, y = 0}, s = 1}
 	if type(proto) == 'table' then
 		for k, v in pairs(proto) do
 			obj[k] = v
 		end
 	end
+	obj.p.w = obj.p.w or 0
+	obj.p.h = obj.p.h or 0
+	
 	if type(obj.img) == 'string' then
 		if not img[obj.img] then
 			if love.filesystem.exists('img/'..obj.img) then
@@ -416,6 +421,20 @@ w.c.physicsobject = function(proto)
 	return setmetatable(obj, {__index = w.c.physicsclass})
 end
 
+w.c.portalclass = {
+	update = function(this, dt)
+		w.c.physicsclass.update(this, dt)
+	end,
+}
+setmetatable(w.c.portalclass, {__index = w.c.physicsclass})
+w.c.portal = function(proto)
+	proto = proto or {}
+	proto.type = 'portal'
+	proto.img = proto.img or 'portal.png'
+	local obj = w.c.physicsobject(proto)
+	return setmetatable(obj, {__index = w.c.portalclass})
+end
+
 -- ENTITY
 w.c.entityclass = {
 	update = function(this, dt)
@@ -471,6 +490,24 @@ w.c.playerclass = {
 	end,
 	fire = function(this, orig, dir)
 		table.insert(world.effects, w.c.proj({p = orig, v = dir, orig = this}))
+	end,
+	use = function(this)
+		portal = this:collide('portal')
+		if portal then
+			world:unload()
+			if portal.level then
+				local levelfile = 'map/'..portal.level..'.lvl'
+				if love.filesystem.exists(levelfile) then
+					world:load(levelfile)
+					return
+				end
+			end
+			if state.mapfile then
+				state.current = 'map'
+			else
+				state.current = 'load'
+			end
+		end
 	end,
 }
 setmetatable(w.c.playerclass, {__index = w.c.entityclass})

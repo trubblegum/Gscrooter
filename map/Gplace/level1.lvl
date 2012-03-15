@@ -7,6 +7,8 @@ platform {p = {x = 768, y = -384}, img = 'platform2.png'}
 platform {p = {x = 1280, y = -256}, img = 'platform2.png'}
 platform {p = {x = 1536, y = -128}, img = 'platform1.png'}
 	
+portal {p = {x = 1302, y = -364}, level = 'Gplace/level2'}
+
 hopperspawn {p = {x = 640, y = -128}}
 hopperspawn {p = {x = 1792, y = -128}}
 buzzerspawn {p = {x = 1024, y = -256}}
