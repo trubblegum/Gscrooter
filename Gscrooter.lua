@@ -300,7 +300,7 @@ setmetatable(w.c.AOEhealclass, {__index = w.c.hitclass})
 w.c.AOEheal = function(proto)
 	proto = proto or {}
 	proto.img = proto.img or 'heal.png'
-	proto.healing = proto.healing or 8
+	proto.healing = proto.healing or 16
 	proto.scale = proto.scale or 1
 	local obj = w.c.hit(proto)
 	return setmetatable(obj, {__index = w.c.AOEhealclass})
@@ -327,11 +327,39 @@ setmetatable(w.c.enemyAOEhealclass, {__index = w.c.hitclass})
 w.c.enemyAOEheal = function(proto)
 	proto = proto or {}
 	proto.img = proto.img or 'heal.png'
-	proto.healing = proto.healing or 8
+	proto.healing = proto.healing or 16
 	proto.scale = proto.scale or 1
 	local obj = w.c.hit(proto)
 	return setmetatable(obj, {__index = w.c.enemyAOEhealclass})
 end
+
+w.c.AOEpoisonclass = {
+	update = function(this, dt)
+		this.scale = this.scale + (dt * 2)
+		this.alpha = this.alpha - (255 * dt)
+		if this.alpha <= 0 then
+			world:remeffect(this)
+			return
+		end
+		this.target = this:collide('player')
+		if this.target then
+			if this.target.hp then
+				this.target.hp = this.target.hp - (this.damage * dt)
+			end
+		end
+		w.c.effectclass.update(this, dt)
+	end,
+}
+setmetatable(w.c.AOEpoisonclass, {__index = w.c.hitclass})
+w.c.AOEpoison = function(proto)
+	proto = proto or {}
+	proto.img = proto.img or 'poison.png'
+	proto.damage = proto.damage or 16
+	proto.scale = proto.scale or 0.5
+	local obj = w.c.hit(proto)
+	return setmetatable(obj, {__index = w.c.AOEpoisonclass})
+end
+
 
 w.c.deathclass = {
 	update = function(this, dt)
@@ -539,7 +567,7 @@ w.c.healtree = function(proto)
 	proto = proto or {}
 	proto.type = 'friendly'
 	proto.img = proto.img or 'healtree.png'
-	proto.healing = proto.healing or 8
+	proto.healing = proto.healing or 16
 	proto.updateinterval = proto.updateinterval or 2
 	proto.updateclock = proto.updateclock or 1
 	local obj = w.c.entity(proto)
@@ -591,12 +619,6 @@ w.c.hopperclass = {
 			end
 		end
 		w.c.enemyclass.update(this, dt)
-	end,
-	left = function(this, dt)
-		this.v.x = 0 - this.speed
-	end,
-	right = function(this, dt)
-		this.v.x = this.speed
 	end,
 }
 setmetatable(w.c.hopperclass, {__index = w.c.enemyclass})
@@ -713,6 +735,72 @@ w.c.buzzerspawn = function(proto)
 	proto.updateinterval = proto.updateinterval or 1.5
 	local obj = w.c.buzzer(proto)
 	return setmetatable(obj, {__index = w.c.buzzerspawnclass})
+end
+
+w.c.slitherclass = {
+	update = function(this, dt)
+		if this.updateclock > this.updateinterval then
+			this.updateclock = 0
+			local action = math.random() * 5
+			if action < 2 then
+				this:spit()
+			elseif action < 4 then
+				this:left()
+			elseif action < 5 then
+				this:right()
+			else
+				-- yeah, right
+			end
+		end
+		w.c.enemyclass.update(this, dt)
+	end,
+	spit = function(this)
+		table.insert(world.effects, w.c.AOEpoison({p = {x = this.p.x, y = this.p.y}, v = {x = (math.random() * 512) - 256, y = -256}}))
+	end,
+}
+setmetatable(w.c.slitherclass, {__index = w.c.hopperclass})
+w.c.slither = function(proto)
+	proto = proto or {}
+	proto.img = proto.img or 'slither.png'
+	proto.damage = proto.damage or 32
+	proto.updateinterval = proto.updateinterval or 1
+	proto.updateclock = proto.updateclock or 1
+	local obj = w.c.enemy(proto)
+	return setmetatable(obj, {__index = w.c.slitherclass})
+end
+
+w.c.slitherspawnclass = {
+	update = function(this, dt)
+		if this.updateclock > this.updateinterval then
+			this.updateclock = 0
+			local action = math.random() * 3
+			if action < 1 then
+				this:heal()
+			elseif action < 3 then
+				this:spawn()
+			else
+				-- yeah, right
+			end
+		end
+		w.c.enemyclass.update(this, dt)
+	end,
+	heal = function(this)
+		table.insert(world.effects, w.c.enemyAOEheal({p = {x = this.p.x + (this.p.w / 2), y = this.p.y}, v = {x = (math.random() * 512) - 256, y = 0}, healing = this.healing}))
+	end,
+	spawn = function(this)
+		table.insert(world.objects, w.c.slither({p = {x = this.p.x, y = this.p.y}}))
+	end
+}
+setmetatable(w.c.slitherspawnclass, {__index = w.c.enemyclass})
+w.c.slitherspawn = function(proto)
+	proto = proto or {}
+	proto.img = proto.img or 'slitherspawn.png'
+	proto.hp = proto.hp or 512
+	proto.damage = proto.damage or 16
+	proto.updateinterval = proto.updateinterval or 8
+	proto.updateclock = proto.updateclock or 6
+	local obj = w.c.enemy(proto)
+	return setmetatable(obj, {__index = w.c.slitherspawnclass})
 end
 
 return w

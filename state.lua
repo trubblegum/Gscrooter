@@ -64,8 +64,8 @@ local state = {
 			this.backdrop = love.graphics.newImage('gui/load.png')
 			this.gui = gui:new(this)
 			-- load
-			local button = this.gui:element(this.gui:button('Load Map', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 128, w = 256, h = 16}))
-			button.click = function(this)
+			this.loadload = this.gui:element(this.gui:button('Load Map', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 128, w = 256, h = 16}))
+			this.loadload.click = function(this)
 				if state.load.maps.value then
 					if love.filesystem.isDirectory('/map/'..state.load.maps.value) then
 						state.mapfile = '/map/'..state.load.maps.value
