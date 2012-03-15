@@ -36,6 +36,7 @@ local state = {
 	},
 	prefs = {
 		load = function(this)
+			this.backdrop = love.graphics.newImage('gui/prefs.png')
 			this.gui = gui:new()
 			-- quit
 			button = this.gui:element(this.gui:button('Back', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 64, w = 256, h = 16}))
@@ -43,7 +44,11 @@ local state = {
 				state.current = state.prev
 			end
 			
-			this.backdrop = love.graphics.newImage('gui/prefs.png')
+			this.gui:text('A : Left', {x = 256, y = 256, w = 256, h = 16})
+			this.gui:text('D : Right', {x = 256, y = 272, w = 256, h = 16})
+			this.gui:text('W : Jump', {x = 256, y = 288, w = 256, h = 16})
+			this.gui:text('S : Use', {x = 256, y = 304, w = 256, h = 16})
+			this.gui:text('No custom controls yet', {x = 256, y = 336, w = 256, h = 16})
 		end,
 		update = function(this, dt)
 			if not this.gui then this:load() end
@@ -180,6 +185,13 @@ local state = {
 					world:unload()
 					state.mapfile = ''
 					state.current = 'menu'
+				end
+				
+				-- prefs
+				button = this.gui:element(this.gui:button('Prefs', {x = love.graphics.getWidth() - 144, y = 48, w = 128, h = 16}))
+				button.click = function(this)
+					state.prev = state.current
+					state.current = 'prefs'
 				end
 			end
 			world:load(state.levelfile)
