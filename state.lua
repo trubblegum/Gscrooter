@@ -77,8 +77,10 @@ local state = {
 			-- levels
 			this.levels = this.gui:element(this.gui:scrollgroup('Select Level', {x = 256, y = 64, w = love.graphics.getWidth() - 512, h = 256}))
 			files = love.filesystem.enumerate('/level')
+			local y = 0
 			for i, file in ipairs(files) do
-				option = this.gui:element(this.gui:option(file, {x = 0, y = this.levels.maxh, w = this.levels.pos.w, h = 16}, file, this.levels.id))
+				y = y + 16
+				option = this.gui:element(this.gui:option(file, {x = 0, y = y, w = this.levels.pos.w, h = 16}, file, this.levels.id))
 			end
 			
 			this.backdrop = love.graphics.newImage('gui/load.png')

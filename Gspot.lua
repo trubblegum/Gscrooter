@@ -443,11 +443,7 @@ local Gspot = {
 				end
 				-- draw group
 				if element.type == 'group' then
-					if element.id == this.mousein then
-						love.graphics.setColor(this.color.default)
-					else
-						love.graphics.setColor(this.color.bg)
-					end
+					love.graphics.setColor(this.color.bg)
 					this.rect(pos)
 					if element.label then
 						if element.color then
@@ -524,11 +520,7 @@ local Gspot = {
 					end
 				-- draw scrollgroup
 				elseif element.type == 'scrollgroup' then
-					if element.id == this.mousein then
-						love.graphics.setColor(this.color.default)
-					else
-						love.graphics.setColor(this.color.bg)
-					end
+					love.graphics.setColor(this.color.bg)
 					this.rect(pos)
 					if element.label then
 						if element.color then

@@ -119,9 +119,9 @@ w.c.objectclass = {
 					if this.v.x > 0 then this.s = -1 end
 				end
 				if this.s < 0 then
-					love.graphics.draw(img[this.img], (this.p.x + this.p.w) + x, this.p.y, 0, -1, 1)
+					love.graphics.draw(img[this.img], math.floor((this.p.x + this.p.w) + x + 0.5), math.floor(this.p.y + 0.5), 0, -1, 1)
 				else
-					love.graphics.draw(img[this.img], this.p.x + x, this.p.y)
+					love.graphics.draw(img[this.img], math.floor(this.p.x + x + 0.5), math.floor(this.p.y + 0.5))
 				end
 				x = x + img[this.img]:getWidth()
 			end
