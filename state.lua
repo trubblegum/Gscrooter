@@ -64,8 +64,8 @@ local state = {
 			this.backdrop = love.graphics.newImage('gui/load.png')
 			this.gui = gui:new(this)
 			-- load
-			this.loadload = this.gui:element(this.gui:button('Load Map', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 128, w = 256, h = 16}))
-			this.loadload.click = function(this)
+			this.loadbutton = this.gui:element(this.gui:button('Load Map', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 128, w = 256, h = 16}))
+			this.loadbutton.click = function(this)
 				if state.load.maps.value then
 					if love.filesystem.isDirectory('/map/'..state.load.maps.value) then
 						state.mapfile = '/map/'..state.load.maps.value
@@ -99,6 +99,9 @@ local state = {
 				end
 				y = y + 16
 				option = this.gui:element(this.gui:option(file, {x = 0, y = y, w = this.maps.pos.w, h = 16}, file, this.maps.id))
+				option.dblclick = function(this)
+					state.load.loadbutton:click()
+				end
 			end
 		end,
 		update = function(this, dt)
@@ -118,14 +121,6 @@ local state = {
 				this.backdrop = love.graphics.newImage('gui/map.png')
 			end
 			this.gui = gui:new(this)
-			-- load
-			local button = this.gui:element(this.gui:button('Load', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 128, w = 256, h = 16}))
-			button.click = function(this)
-				if state.load.levels.value then
-					state.level = state.load.levels.value
-					state.current = 'world'
-				end
-			end
 			-- prefs
 			button = this.gui:element(this.gui:button('Prefs', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 96, w = 256, h = 16}))
 			button.click = function(this)

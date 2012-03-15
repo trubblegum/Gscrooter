@@ -5,3 +5,5 @@ portal {p = {x = 1536, y = -128}}
 slitherspawn {p = {x = 512, y = -256}}
 
 healtree {p = {x = 64, y = -128}}
+
+scenery {p = {x = 1280, y = -128}}

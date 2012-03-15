@@ -40,15 +40,19 @@ local w = {
 					end
 				end
 			end
+			this.player = this.c.player()
+			table.insert(this.objects, this.player)
+		else
+			this:unload()
+			state.current = 'menu'
 		end
-		this.player = this.c.player()
-		table.insert(this.objects, this.player)
 		this.ctrl = {
 			{key = 'a', cmd = this.player.left},
 			{key = 'd', cmd = this.player.right},
 			{key = 'w', cmd = this.player.jump},
 			{key = 's', cmd = this.player.use},
 		}
+		love.audio.play(snd.load)
 	end,
 	unload = function(this)
 		this.objects = {}
@@ -412,14 +416,17 @@ w.c.AOEpoison = function(proto)
 	return setmetatable(obj, {__index = w.c.AOEpoisonclass})
 end
 
-
 w.c.deathclass = {
 	update = function(this, dt)
 		this.alpha = this.alpha - (128 * dt)
 		if this.alpha <= 0 then
 			if this.type == 'player' then
 				world:unload()
-				state.current = 'load'
+				if state.mapfile then
+					state.current = 'map'
+				else
+					state.current = 'load'
+				end
 			end
 			world:remeffect(this)
 			return

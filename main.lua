@@ -3,8 +3,11 @@ gui = require('Gspot')
 world = require('Gscrooter')
 
 img = {}
+snd = {}
 
 love.load = function()
+	snd.click = love.audio.newSource('snd/click.ogg', 'static')
+	snd.load = love.audio.newSource('snd/load.ogg')
 	--
 end
 
@@ -24,6 +27,8 @@ end
 
 love.mousepressed = function(x, y, button)
 	if state[state.current].gui.mousein then
+		snd.click:stop()
+		love.audio.play(snd.click)
 		state[state.current].gui:mousepress(x, y, button)
 	elseif state[state.current].mousepress then
 		state[state.current]:mousepress(x, y, button)
