@@ -177,6 +177,40 @@ w.c.platform = function(proto)
 	return setmetatable(obj, {__index = w.c.platformclass})
 end
 
+w.c.sceneryclass = {
+	update = function(this, dt)
+		w.c.platformclass.update(this, dt)
+	end,
+	draw = function(this)
+		if this.bg then
+			local y = img[this.bg]:getHeight() - this.p.h
+			local x = (this.p.w - img[this.bg]:getWidth()) / 2
+			if this.s < 0 then
+				love.graphics.draw(img[this.bg], this.p.x + this.p.w - x, this.p.y - y, 0, -1, 1)
+			else
+				love.graphics.draw(img[this.bg], this.p.x + x, this.p.y - y)
+			end
+		end
+		w.c.platformclass.draw(this)
+	end,
+}
+setmetatable(w.c.sceneryclass, {__index = w.c.platformclass})
+w.c.scenery = function(proto)
+	proto = proto or {}
+	proto.img = proto.img or 'tree1.png'
+	proto.bg = proto.bg or 'treetop1.png'
+	if type(proto.bg) == 'string' and not img[proto.bg] then
+		if love.filesystem.exists('img/'..proto.bg) then
+			img[proto.bg] = love.graphics.newImage('img/'..proto.bg)
+		else
+			proto.bg = nil
+		end
+	end
+	local obj = w.c.platform(proto)
+	return setmetatable(obj, {__index = w.c.sceneryclass})
+end
+
+
 w.c.projclass = {
 	update = function(this, dt)
 		this.age = this.age + dt
@@ -241,6 +275,24 @@ w.c.effect = function(proto)
 end
 
 w.c.hitclass = {
+	collide = function(this, target)
+		target = target or 'none'
+		for i, obj in ipairs(world.objects) do
+			if obj ~= this and ((type(target) == 'string' and (target == 'none' or obj.type == target)) or (type(target) == 'table' and obj == target)) then
+				-- print('check '..this.type..' for '..target)
+				if this.p.x + (this.p.w * this.scale) >= obj.p.x then
+					if this.p.x <= obj.p.x + (this.p.w * this.scale) then
+						if this.p.y + (this.p.h * this.scale) >= obj.p.y then
+							if this.p.y <= obj.p.y + (this.p.h * this.scale) then
+								return obj
+							end
+						end
+					end
+				end
+			end
+		end
+		return false
+	end,
 	update = function(this, dt)
 		this.scale = this.scale + (dt * 2)
 		this.alpha = this.alpha - (255 * (dt * 2))
