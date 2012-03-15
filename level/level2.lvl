@@ -1,0 +1,5 @@
+platform {p = {x = 0, y = 0, w = 2048, h = 0}, img = 'platform4.png'}
+
+buzzerspawn {p = {x = 1024, y = -256}}
+
+healtree {p = {x = 1024, y = -128}}

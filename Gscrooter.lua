@@ -4,6 +4,7 @@ camera = require('camera')
 local w = {
 	c = {}, -- classes
 	gravity = 512,
+	ceiling = -1024,
 	objects = {},
 	effects = {},
 	ctrl = {},
@@ -115,13 +116,16 @@ w.c.objectclass = {
 			local x = 0
 			while x < this.p.w do
 				if this.v then
-					if this.v.x < 0 then this.s = 1 end
-					if this.v.x > 0 then this.s = -1 end
+					if this.v.x < 0 then
+						this.s = 1
+					elseif this.v.x > 0 then
+						this.s = -1
+					end
 				end
 				if this.s < 0 then
-					love.graphics.draw(img[this.img], math.floor((this.p.x + this.p.w) + x + 0.5), math.floor(this.p.y + 0.5), 0, -1, 1)
+					love.graphics.draw(img[this.img], this.p.x + this.p.w + x, this.p.y, 0, -1, 1)
 				else
-					love.graphics.draw(img[this.img], math.floor(this.p.x + x + 0.5), math.floor(this.p.y + 0.5))
+					love.graphics.draw(img[this.img], this.p.x + x, this.p.y)
 				end
 				x = x + img[this.img]:getWidth()
 			end
@@ -196,7 +200,7 @@ w.c.proj = function(proto)
 	proto.img = proto.img or 'bullet.png'
 	proto.v = proto.v or {x = 0, y = 0}
 	proto.age = proto.age or 0
-	proto.life = proto.life or 4
+	proto.life = proto.life or 1
 	proto.speed = proto.speed or 512
 	proto.damage = proto.damage or 16
 	local obj = w.c.object(proto)
@@ -361,6 +365,13 @@ w.c.physicsclass = {
 		-- inertia
 		this.p.x = this.p.x + (this.v.x * dt)
 		this.p.y = this.p.y + (this.v.y * dt)
+		--wrap
+		local ground = world.objects[1]
+		if this.p.x < ground.p.x then
+			this.p.x = (ground.p.x + ground.p.w) - this.p.w
+		elseif this.p.x + this.p.w > ground.p.x + ground.p.w then
+			this.p.x = ground.p.x
+		end
 		-- collision
 		this.carrier = this:collide('platform')
 		if this.carrier then
@@ -383,26 +394,16 @@ w.c.physicsclass = {
 		-- gravity
 		if not this.carrier then
 			if this.v.y < world.gravity * this.mass then
-				this.v.y = math.min(this.v.y + (world.gravity * dt), world.gravity * this.mass)
-			end
-			if this.v.y > world.gravity * this.mass then
-				this.v.y = math.max(this.v.y - (world.gravity * dt), world.gravity * this.mass)
+				this.v.y = math.min(this.v.y + (world.gravity * this.mass * dt), world.gravity * this.mass)
+			elseif this.v.y > world.gravity * this.mass then
+				this.v.y = math.max(this.v.y - (world.gravity * this.mass * dt), world.gravity * this.mass)
 			end
 		end
 		-- resistance
 		if this.v.x > 0 then
 			this.v.x = math.max(this.v.x - (world.gravity * dt), 0)
-		end
-		if this.v.x < 0 then
+		elseif this.v.x < 0 then
 			this.v.x = math.min(this.v.x + (world.gravity * dt), 0)
-		end
-		--wrap
-		local ground = world.objects[1]
-		if this.p.x < ground.p.x then
-			this.p.x = (ground.p.x + ground.p.w) - this.p.w
-		end
-		if this.p.x + this.p.w > ground.p.x + ground.p.w then
-			this.p.x = ground.p.x
 		end
 	end,
 }
@@ -423,6 +424,9 @@ w.c.entityclass = {
 			world:remobject(this)
 			return
 		end
+		if this.p.y < world.ceiling then
+			this.p.y = world.ceiling
+		end
 		w.c.physicsclass.update(this, dt)
 	end,
 	draw = function(this)
@@ -434,7 +438,7 @@ w.c.entityclass = {
 		w.c.physicsclass.draw(this)
 	end,
 	left = function(this, dt)
-		this.v.x = math.max(0 - this.speed, (this.v.x + (0 - ((world.gravity + this.speed) * dt))))
+		this.v.x = math.max(0 - this.speed, this.v.x + (0 - ((world.gravity + this.speed) * dt)))
 	end,
 	right = function(this, dt)
 		this.v.x = math.min(this.speed, this.v.x + ((world.gravity + this.speed) * dt))
@@ -449,8 +453,8 @@ setmetatable(w.c.entityclass, {__index = w.c.physicsclass})
 w.c.entity = function(proto)
 	proto = proto or {}
 	proto.p = proto.p or {x = 128, y = -128, w = 0, h = 0}
-	proto.ohp = proto.hp or 100
-	proto.hp = proto.hp or proto.ohp
+	proto.hp = proto.hp or 128
+	proto.ohp = proto.ohp or proto.hp
 	proto.speed = proto.speed or 256
 	proto.updateinterval = proto.updateinterval or 4
 	proto.updateclock = proto.updateclock or 0
@@ -526,6 +530,7 @@ w.c.enemy = function(proto)
 	proto = proto or {}
 	proto.type = 'enemy'
 	proto.img = proto.img or 'enemy.png'
+	proto.hp = proto.hp or 64
 	proto.damage = proto.damage or 32
 	proto.updateinterval = proto.updateinterval or 1
 	proto.updateclock = proto.updateclock or 1
@@ -594,7 +599,7 @@ setmetatable(w.c.hopperspawnclass, {__index = w.c.enemyclass})
 w.c.hopperspawn = function(proto)
 	proto = proto or {}
 	proto.img = proto.img or 'hopperspawn.png'
-	proto.hp = proto.hp or 500
+	proto.hp = proto.hp or 512
 	proto.damage = proto.damage or 16
 	proto.updateinterval = proto.updateinterval or 8
 	proto.updateclock = proto.updateclock or 6
@@ -620,7 +625,7 @@ w.c.buzzerclass = {
 		w.c.enemyclass.update(this, dt)
 	end,
 	dive = function(this)
-		this.v.y = this.speed * 2
+		this.v.y = this.speed * 4
 	end,
 	left = function(this, dt)
 		this.v.x = 0 - this.speed
@@ -637,7 +642,7 @@ w.c.buzzer = function(proto)
 	proto.img = proto.img or 'buzzer.png'
 	proto.mass = proto.mass or 0.5
 	proto.hp = proto.hp or 32
-	proto.updateinterval = proto.updateinterval or 0.5
+	proto.updateinterval = proto.updateinterval or 1
 	local obj = w.c.enemy(proto)
 	return setmetatable(obj, {__index = w.c.buzzerclass})
 end
@@ -667,10 +672,9 @@ setmetatable(w.c.buzzerspawnclass, {__index = w.c.buzzerclass})
 w.c.buzzerspawn = function(proto)
 	proto = proto or {}
 	proto.img = proto.img or 'buzzerspawn.png'
-	proto.mass = proto.mass or 0.1
-	proto.hp = proto.hp or 500
-	proto.updateinterval = proto.updateinterval or 2
-	local obj = w.c.enemy(proto)
+	proto.hp = proto.hp or 256
+	proto.updateinterval = proto.updateinterval or 1.5
+	local obj = w.c.buzzer(proto)
 	return setmetatable(obj, {__index = w.c.buzzerspawnclass})
 end
 

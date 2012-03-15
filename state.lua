@@ -79,6 +79,9 @@ local state = {
 			files = love.filesystem.enumerate('/level')
 			local y = 0
 			for i, file in ipairs(files) do
+				if y == 0 then
+					this.levels.value = file
+				end
 				y = y + 16
 				option = this.gui:element(this.gui:option(file, {x = 0, y = y, w = this.levels.pos.w, h = 16}, file, this.levels.id))
 			end
