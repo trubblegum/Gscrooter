@@ -1,6 +1,12 @@
-Gscrooter is a super awesome platformer engine for LÖVE, inpired by Gewter (see below), but rebuilt from the ground up.
+Gscrooter is a super awesome platformer engine for LÖVE (a SCREWformer?), inpired by Gewter (see below), but rebuilt from the ground up.
 
 Kill the stuff! Count the hoppers! Protect your tree! Survive! Make your own levels! And more!
+
+ToDo :
+- extendable class system
+- fill out sounds
+- add inventory
+- your idea here
 
 map/mapname/map.lvl defines a map, which links to levels
 map/mapname/map.png defines a background image for the map
@@ -17,14 +23,14 @@ If type(target) == string then check only objects of this type (nope that type i
 If type(target) == table then check only against the object supplied
 If not target then check all objects
 
-Object defs in level1.lvl are minimal, but you can customize any object by adding attributes to the prototype, and even override individual objects' update(this, dt) and draw(this) functions. It is generally wise to call a lower order's update and draw at the end of an override function
+Object defs in level1.lvl are minimal, but you can customize any object by adding attributes and functions to the prototype, and even override individual objects' update(this, dt) and draw(this) functions. It is generally wise to call a lower order's update and draw at the end of an override function.
 
-Some example objects :
+Some included example objects :
 - platform {p = {x, y, w}}
-- scenery {p = {x, y}, bg = 'treetop1.png'} -- sets bg to img/treetop1.png, which will render behind, centered and aligned to bottom
-- healtree {p = {x, y}, healing  = (HPS)} -- 
-- hopper {{p = {x, y}, hp, damage = (DPS)}
-- hopperspawn {}
+- scenery {p = {x, y}, bg = 'treetop1.png'} -- behaves like a platform, but renders bg behind, centered and aligned to bottom
+- healtree {p = {x, y}, healing  = (HPS)} -- it has an AOE heal effect
+- hopper {{p = {x, y}, hp, damage = (DPS)} -- you know what this does
+- hopperspawn {} -- just because this is how I did it, doesn't mean you have to
 - buzzer {}
 - buzzerspawn {}
 - slither {}

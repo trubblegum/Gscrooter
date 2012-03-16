@@ -7,22 +7,15 @@ local w = {
 	ceiling = -1024,
 	objects = {},
 	effects = {},
-	ctrl = {},
 	cam = camera(vector(0, 0), 1, 0),
 	remeffect = function(this, rem)
 		for i, obj in pairs(this.effects) do
-			if obj == rem then
-				table.remove(this.effects, i)
-				break
-			end
+			if obj == rem then table.remove(this.effects, i) break end
 		end
 	end,
 	remobject = function(this, rem)
 		for i, obj in pairs(this.objects) do
-			if obj == rem then
-				table.remove(this.objects, i)
-				break
-			end
+			if obj == rem then table.remove(this.objects, i) break end
 		end
 	end,
 	load = function(this, levelfile)
@@ -32,27 +25,18 @@ local w = {
 				if i then
 					local def = line:sub(1, i - 1)
 					local obj = line:sub(i + 1)
-					--print('def = "'..def..'" obj = "'..obj..'"')
 					if this.c[def] then
-						obj = loadstring('return '..obj)
-						obj = obj()
+						obj = TS:unpack(obj)
 						table.insert(this.objects, this.c[def](obj))
 					end
 				end
 			end
-			this.player = this.c.player()
-			table.insert(this.objects, this.player)
+			table.insert(this.objects, player)
+			love.audio.play(snd.load)
 		else
 			this:unload()
 			state.current = 'menu'
 		end
-		this.ctrl = {
-			{key = 'a', cmd = this.player.left},
-			{key = 'd', cmd = this.player.right},
-			{key = 'w', cmd = this.player.jump},
-			{key = 's', cmd = this.player.use},
-		}
-		love.audio.play(snd.load)
 	end,
 	unload = function(this)
 		this.objects = {}
@@ -60,56 +44,56 @@ local w = {
 	end,
 	update = function(this, dt)
 		if focus then
-			for i, ctrl in ipairs(this.ctrl) do
-				if love.keyboard.isDown(ctrl.key) then
-					ctrl.cmd(this.player, dt)
+			if not state.world.gui.focus then
+				for i, c in pairs(ctrl) do
+					if love.keyboard.isDown(c.key) then c.cmd(player, dt, c.key) end
 				end
 			end
-			for i, obj in ipairs(this.effects) do
-				obj:update(dt)
-			end
-			for i, obj in ipairs(this.objects) do
-				obj:update(dt)
-			end
+			for i, obj in ipairs(this.effects) do obj:update(dt) end
+			for i, obj in ipairs(this.objects) do obj:update(dt) end
 		end
 	end,
 	draw = function(this, dt)
 		local ground = this.objects[1]
-		this.cam.pos = vector(math.min(math.max((this.player.p.x + (this.player.p.w / 2)) - (this.player.v.x * dt), ground.p.x + (love.graphics.getWidth() / 2)), (ground.p.x + ground.p.w) - (love.graphics.getWidth() / 2)), (this.player.p.y + this.player.p.h) - (this.player.v.y * dt))
+		--this.cam.pos = vector(math.min(math.max((player.p.x + (player.p.w / 2)) - (player.v.x * dt), ground.p.x + (love.graphics.getWidth() / 2)), (ground.p.x + ground.p.w) - (love.graphics.getWidth() / 2)), (player.p.y + player.p.h) - (player.v.y * dt))
+		this.cam.pos = vector(math.min(math.max(player.p.x + (player.p.w / 2), ground.p.x + (love.graphics.getWidth() / 2)), (ground.p.x + ground.p.w) - (love.graphics.getWidth() / 2)), player.p.y + player.p.h)
 		this.cam:attach()
-		for i, obj in ipairs(this.objects) do
-			obj:draw()
-		end
-		for i, obj in ipairs(this.effects) do
-			obj:draw()
-		end
+		for i, obj in ipairs(this.objects) do obj:draw() end
+		for i, obj in ipairs(this.effects) do obj:draw() end
 		this.cam:detach()
 	end,
 	mousepress = function(this, x, y, button)
 		local c = this.cam:worldCoords(vector(x, y))
-		local orig = {x = this.player.p.x + (this.player.p.w / 2), y = this.player.p.y + (this.player.p.h / 2)}
+		local orig = {x = player.p.x + (player.p.w / 2), y = player.p.y + (player.p.h / 2)}
 		local rel = vector(c.x - orig.x, c.y - orig.y)
 		norm = rel:normalized()
-		this.player:fire(orig, norm)
+		player:fire(orig, norm)
 	end,
 }
 
---OBJECT
+-- OBJECT
 w.c.objectclass = {
-	collide = function(this, target)
-		target = target or 'none'
+	c = {},
+	intersect = function(this, obj)
+		if this.p.x + this.p.w >= obj.p.x and this.p.x <= obj.p.x + obj.p.w then
+			if this.p.y + this.p.h >= obj.p.y and this.p.y <= obj.p.y + obj.p.h then
+				return true
+			end
+		end
+		return false
+	end,
+	collide = function(this, condition)
+		condition = condition or 'true'
+		if this.c[condition] then
+			c = this.c[condition]
+		else
+			loadstring('function c(obj) return '..condition..' end')()
+			this.c[condition] = c
+		end
 		for i, obj in ipairs(world.objects) do
-			if obj ~= this and ((type(target) == 'string' and (target == 'none' or obj.type == target)) or (type(target) == 'table' and obj == target)) then
-				-- print('check '..this.type..' for '..target)
-				if this.p.x + this.p.w >= obj.p.x then
-					if this.p.x <= obj.p.x + obj.p.w then
-						if this.p.y + this.p.h >= obj.p.y then
-							if this.p.y <= obj.p.y + obj.p.h then
-								return obj
-							end
-						end
-					end
-				end
+			if obj ~= this and c(obj) and this:intersect(obj) then
+				--print('check '..this.type..' for '..condition)
+				return obj
 			end
 		end
 		return false
@@ -122,11 +106,7 @@ w.c.objectclass = {
 			local x = 0
 			while x < this.p.w do
 				if this.v then
-					if this.v.x < 0 then
-						this.s = 1
-					elseif this.v.x > 0 then
-						this.s = -1
-					end
+					if this.v.x < 0 then this.s = 1 elseif this.v.x > 0 then this.s = -1 end
 				end
 				if this.s < 0 then
 					love.graphics.draw(img[this.img], this.p.x + this.p.w + x, this.p.y, 0, -1, 1)
@@ -214,7 +194,6 @@ w.c.scenery = function(proto)
 	return setmetatable(obj, {__index = w.c.sceneryclass})
 end
 
-
 w.c.projclass = {
 	update = function(this, dt)
 		this.age = this.age + dt
@@ -224,7 +203,7 @@ w.c.projclass = {
 		end
 		this.p.x = this.p.x + ((this.v.x * this.speed) * dt)
 		this.p.y = this.p.y + ((this.v.y * this.speed) * dt)
-		this.target = this:collide()
+		this.target = this:collide('obj.type ~= "portal"')
 		if this.target and this.target ~= this.orig then
 			if this.target.hp then
 				this.target.hp = this.target.hp - this.damage
@@ -279,23 +258,12 @@ w.c.effect = function(proto)
 end
 
 w.c.hitclass = {
-	collide = function(this, target)
-		target = target or 'none'
-		for i, obj in ipairs(world.objects) do
-			if obj ~= this and ((type(target) == 'string' and (target == 'none' or obj.type == target)) or (type(target) == 'table' and obj == target)) then
-				-- print('check '..this.type..' for '..target)
-				if this.p.x + (this.p.w * this.scale) >= obj.p.x then
-					if this.p.x <= obj.p.x + (this.p.w * this.scale) then
-						if this.p.y + (this.p.h * this.scale) >= obj.p.y then
-							if this.p.y <= obj.p.y + (this.p.h * this.scale) then
-								return obj
-							end
-						end
-					end
-				end
+	intersect = function(this, obj)
+		if this.p.x + (this.p.w * this.scale) >= obj.p.x and this.p.x <= obj.p.x + (this.p.w * this.scale) then
+			if this.p.y + (this.p.h * this.scale) >= obj.p.y and this.p.y <= obj.p.y + (this.p.h * this.scale) then
+				return true
 			end
 		end
-		return false
 	end,
 	update = function(this, dt)
 		this.scale = this.scale + (dt * 2)
@@ -343,7 +311,7 @@ w.c.AOEhealclass = {
 			world:remeffect(this)
 			return
 		end
-		this.target = this:collide('player')
+		this.target = this:collide('obj == player')
 		if this.target then
 			if this.target.hp then
 				this.target.hp = math.min(this.target.hp + (this.healing * dt), this.target.ohp)
@@ -370,7 +338,7 @@ w.c.enemyAOEhealclass = {
 			world:remeffect(this)
 			return
 		end
-		this.target = this:collide('enemy')
+		this.target = this:collide('obj.type == "enemy"')
 		if this.target then
 			if this.target.hp then
 				this.target.hp = math.min(this.target.hp + (this.healing * dt), this.target.ohp)
@@ -397,7 +365,7 @@ w.c.AOEpoisonclass = {
 			world:remeffect(this)
 			return
 		end
-		this.target = this:collide('player')
+		this.target = this:collide('obj == player')
 		if this.target then
 			if this.target.hp then
 				this.target.hp = this.target.hp - (this.damage * dt)
@@ -421,6 +389,7 @@ w.c.deathclass = {
 		this.alpha = this.alpha - (128 * dt)
 		if this.alpha <= 0 then
 			if this.type == 'player' then
+				player = world.c.player()
 				world:unload()
 				if state.mapfile then
 					state.current = 'map'
@@ -465,7 +434,7 @@ w.c.physicsclass = {
 			this.p.x = ground.p.x
 		end
 		-- collision
-		this.carrier = this:collide('platform')
+		this.carrier = this:collide('obj.type == "platform"')
 		if this.carrier then
 			-- falling
 			if this.v.y >= 0 then
@@ -579,7 +548,7 @@ w.c.playerclass = {
 		table.insert(world.effects, w.c.proj({p = orig, v = dir, orig = this}))
 	end,
 	use = function(this)
-		portal = this:collide('portal')
+		portal = this:collide('obj.type == "portal"')
 		if portal then
 			world:unload()
 			if portal.level then
@@ -600,7 +569,8 @@ w.c.playerclass = {
 setmetatable(w.c.playerclass, {__index = w.c.entityclass})
 w.c.player = function(proto)
 	proto = proto or {}
-	proto.p = proto.p or {x = 128, y = -512, w = 0, h = 0}
+	proto.p = proto.p or {x = 128, y = -256, w = 0, h = 0}
+	proto.hp = proto.hp or 100
 	proto.type = 'player'
 	proto.img = 'player.png'
 	local obj = w.c.entity(proto)
@@ -635,7 +605,7 @@ end
 
 w.c.enemyclass = {
 	update = function(this, dt)
-		local target = this:collide('player')
+		local target = this:collide('obj == player')
 		if target then
 			target.hp = target.hp - (this.damage * dt)
 		end
@@ -861,5 +831,17 @@ w.c.slitherspawn = function(proto)
 	local obj = w.c.enemy(proto)
 	return setmetatable(obj, {__index = w.c.slitherspawnclass})
 end
+
+player = w.c.player()
+ctrl = {
+	left = {key = 'a', cmd = player.left, label = 'Move Left'},
+	right = {key = 'd', cmd = player.right, label = 'Move right'},
+	jump = {key = 'w', cmd = player.jump, label = 'Jump'},
+	use = {key = 's', cmd = player.use, label = 'Use'},
+	slot1 = {key = 'f1', cmd = player.use, label = 'Slot 1'},
+	slot2 = {key = 'f2', cmd = player.use, label = 'Slot 2'},
+	slot3 = {key = 'f3', cmd = player.use, label = 'Slot 3'},
+	slot4 = {key = 'f4', cmd = player.use, label = 'Slot 4'},
+}
 
 return w
