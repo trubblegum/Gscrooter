@@ -18,10 +18,9 @@ The first line in level.lvl is the floor, which defines the level's bounds (enti
 Objects are divided into object and effect level tables. Generally, effects call this:collide(), which checks for collision against the object table, and returns the first collision.
 The exception to this is objects of level physicsobject or above (entity, player, enemy, etc)
 
-object:collide() accepts a second parameter target, which it uses to filter objects being checked.
-If type(target) == string then check only objects of this type (nope that type is a general object grouping, not the object type)
-If type(target) == table then check only against the object supplied
-If not target then check all objects
+object:collide() accepts a second parameter condition, which it uses to filter objects being checked.
+If type(condition) == 'string' then check against condition supplied
+If not condition then check all objects
 
 Object defs in level1.lvl are minimal, but you can customize any object by adding attributes and functions to the prototype, and even override individual objects' update(this, dt) and draw(this) functions. It is generally wise to call a lower order's update and draw at the end of an override function.
 
@@ -31,6 +30,8 @@ Some included example objects :
 - healtree {p = {x, y}, healing  = (HPS)} -- it has an AOE heal effect
 - hopper {{p = {x, y}, hp, damage = (DPS)} -- you know what this does
 - hopperspawn {} -- just because this is how I did it, doesn't mean you have to
+- bommer {}
+- bommerspawn {}
 - buzzer {}
 - buzzerspawn {}
 - slither {}

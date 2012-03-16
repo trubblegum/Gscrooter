@@ -5,6 +5,7 @@ state = require('state')
 gui = require('Gspot')
 world = require('Gscrooter') -- also brings us the marvels of player and ctrl
 
+focus = true
 
 love.load = function()
 	snd.click = love.audio.newSource('snd/click.ogg', 'static')
@@ -13,15 +14,15 @@ love.load = function()
 end
 
 love.update = function(dt)
-	current = state[state.current]
-	current:update(dt)
+	--if focus then
+		current = state[state.current]
+		current:update(dt)
+	--end
 end
 
 love.draw = function()
 	current:draw()
 end
-
-focus = true
 
 love.focus = function(f)
 	focus = f

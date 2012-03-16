@@ -54,15 +54,13 @@ local w = {
 		end
 	end,
 	update = function(this, dt)
-		if focus then
-			if not state.world.gui.focus then
-				for i, c in pairs(ctrl) do
-					if love.keyboard.isDown(c.key) then c.cmd(player, dt, c.key) end
-				end
+		if not state.world.gui.focus then
+			for i, c in pairs(ctrl) do
+				if love.keyboard.isDown(c.key) then c.cmd(player, dt, c.key) end
 			end
-			for i, obj in ipairs(this.effects) do obj:update(dt) end
-			for i, obj in ipairs(this.objects) do obj:update(dt) end
 		end
+		for i, obj in ipairs(this.effects) do obj:update(dt) end
+		for i, obj in ipairs(this.objects) do obj:update(dt) end
 	end,
 	draw = function(this, dt)
 		if this.objects[1] then
@@ -706,7 +704,7 @@ w.c.hopperspawn = function(proto)
 	return setmetatable(obj, {__index = w.c.hopperspawnclass})
 end
 
-w.c.buzzerclass = {
+w.c.bommerclass = {
 	update = function(this, dt)
 		if this.updateclock > this.updateinterval then
 			this.updateclock = 0
@@ -735,18 +733,18 @@ w.c.buzzerclass = {
 		this.v.y = 0 - this.speed
 	end,
 }
-setmetatable(w.c.buzzerclass, {__index = w.c.enemyclass})
-w.c.buzzer = function(proto)
+setmetatable(w.c.bommerclass, {__index = w.c.enemyclass})
+w.c.bommer = function(proto)
 	proto = proto or {}
-	proto.img = proto.img or 'buzzer.png'
+	proto.img = proto.img or 'bommer.png'
 	proto.mass = proto.mass or 0.5
 	proto.hp = proto.hp or 32
 	proto.updateinterval = proto.updateinterval or 1
 	local obj = w.c.enemy(proto)
-	return setmetatable(obj, {__index = w.c.buzzerclass})
+	return setmetatable(obj, {__index = w.c.bommerclass})
 end
 
-w.c.buzzerspawnclass = {
+w.c.bommerspawnclass = {
 	update = function(this, dt)
 		if this.updateclock > this.updateinterval then
 			this.updateclock = 0
@@ -764,15 +762,96 @@ w.c.buzzerspawnclass = {
 		w.c.enemyclass.update(this, dt)
 	end,
 	spawn = function(this)
+		table.insert(world.objects, w.c.bommer({p = {x = this.p.x, y = this.p.y}}))
+	end,
+}
+setmetatable(w.c.bommerspawnclass, {__index = w.c.bommerclass})
+w.c.bommerspawn = function(proto)
+	proto = proto or {}
+	proto.img = proto.img or 'bommerspawn.png'
+	proto.hp = proto.hp or 256
+	proto.updateinterval = proto.updateinterval or 1.5
+	local obj = w.c.bommer(proto)
+	return setmetatable(obj, {__index = w.c.bommerspawnclass})
+end
+
+w.c.buzzerclass = {
+	update = function(this, dt)
+		if this.updateclock > this.updateinterval then
+			this.updateclock = 0
+			local action = math.random() * 6
+			if action < 1 then
+				this:jump()
+			elseif action < 3 then
+				this:left()
+			elseif action < 5 then
+				this:right()
+			else
+				-- yeah, right
+			end
+		end
+		w.c.enemyclass.update(this, dt)
+	end,
+	jump = function(this, dt)
+		this.v.y = 0 - (this.speed / 4)
+	end,
+	left = function(this, dt)
+		this.v.x = 0 - this.speed
+		this.v.y = 0 - (this.speed / 8)
+	end,
+	right = function(this, dt)
+		this.v.x = this.speed
+		this.v.y = 0 - (this.speed / 8)
+	end,
+}
+setmetatable(w.c.buzzerclass, {__index = w.c.enemyclass})
+w.c.buzzer = function(proto)
+	proto = proto or {}
+	proto.img = proto.img or 'buzzer.png'
+	proto.speed = proto.speed or 512
+	proto.mass = proto.mass or 0.5
+	proto.hp = proto.hp or 32
+	proto.updateinterval = proto.updateinterval or 0.5
+	local obj = w.c.enemy(proto)
+	return setmetatable(obj, {__index = w.c.buzzerclass})
+end
+
+w.c.buzzerspawnclass = {
+	update = function(this, dt)
+		if this.updateclock > this.updateinterval then
+			this.updateclock = 0
+			local action = math.random() * 3
+			if action < 1 then
+				this:spawn()
+			elseif action < 2 then
+				this:left()
+			elseif action < 3 then
+				this:right()
+			else
+				-- yeah, right
+			end
+		end
+		w.c.enemyclass.update(this, dt)
+	end,
+	spawn = function(this)
 		table.insert(world.objects, w.c.buzzer({p = {x = this.p.x, y = this.p.y}}))
+	end,
+	left = function(this, dt)
+		this.v.x = 0 - this.speed
+		this.v.y = 0 - (this.speed / 2)
+	end,
+	right = function(this, dt)
+		this.v.x = this.speed
+		this.v.y = 0 - (this.speed / 2)
 	end,
 }
 setmetatable(w.c.buzzerspawnclass, {__index = w.c.buzzerclass})
 w.c.buzzerspawn = function(proto)
 	proto = proto or {}
 	proto.img = proto.img or 'buzzerspawn.png'
+	proto.speed = proto.speed or 256
 	proto.hp = proto.hp or 256
-	proto.updateinterval = proto.updateinterval or 1.5
+	proto.updateinterval = proto.updateinterval or 1
 	local obj = w.c.buzzer(proto)
 	return setmetatable(obj, {__index = w.c.buzzerspawnclass})
 end
