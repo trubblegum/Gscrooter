@@ -19,6 +19,7 @@ local w = {
 		end
 	end,
 	load = function(this, levelfile)
+		this:unload()
 		if love.filesystem.exists(levelfile) then
 			for line in love.filesystem.lines(levelfile) do
 				local i = line:find(' ', 1)
@@ -31,8 +32,12 @@ local w = {
 					end
 				end
 			end
+			player.p.x = 128
+			player.p.y = -256
+			
 			table.insert(this.objects, player)
 			love.audio.play(snd.load)
+			state.current = 'world'
 		else
 			this:unload()
 			state.current = 'menu'
@@ -41,6 +46,12 @@ local w = {
 	unload = function(this)
 		this.objects = {}
 		this.effects = {}
+		if state.mapfile then
+			state.current = 'map'
+		else
+			player = this.c.player()
+			state.current = 'loadmap'
+		end
 	end,
 	update = function(this, dt)
 		if focus then
@@ -54,13 +65,15 @@ local w = {
 		end
 	end,
 	draw = function(this, dt)
-		local ground = this.objects[1]
-		--this.cam.pos = vector(math.min(math.max((player.p.x + (player.p.w / 2)) - (player.v.x * dt), ground.p.x + (love.graphics.getWidth() / 2)), (ground.p.x + ground.p.w) - (love.graphics.getWidth() / 2)), (player.p.y + player.p.h) - (player.v.y * dt))
-		this.cam.pos = vector(math.min(math.max(player.p.x + (player.p.w / 2), ground.p.x + (love.graphics.getWidth() / 2)), (ground.p.x + ground.p.w) - (love.graphics.getWidth() / 2)), player.p.y + player.p.h)
-		this.cam:attach()
-		for i, obj in ipairs(this.objects) do obj:draw() end
-		for i, obj in ipairs(this.effects) do obj:draw() end
-		this.cam:detach()
+		if this.objects[1] then
+			local ground = this.objects[1]
+			--this.cam.pos = vector(math.min(math.max((player.p.x + (player.p.w / 2)) - (player.v.x * dt), ground.p.x + (love.graphics.getWidth() / 2)), (ground.p.x + ground.p.w) - (love.graphics.getWidth() / 2)), (player.p.y + player.p.h) - (player.v.y * dt))
+			this.cam.pos = vector(math.min(math.max(player.p.x + (player.p.w / 2), ground.p.x + (love.graphics.getWidth() / 2)), (ground.p.x + ground.p.w) - (love.graphics.getWidth() / 2)), player.p.y + player.p.h)
+			this.cam:attach()
+			for i, obj in ipairs(this.objects) do obj:draw() end
+			for i, obj in ipairs(this.effects) do obj:draw() end
+			this.cam:detach()
+		end
 	end,
 	mousepress = function(this, x, y, button)
 		local c = this.cam:worldCoords(vector(x, y))
@@ -391,11 +404,7 @@ w.c.deathclass = {
 			if this.type == 'player' then
 				player = world.c.player()
 				world:unload()
-				if state.mapfile then
-					state.current = 'map'
-				else
-					state.current = 'load'
-				end
+				return
 			end
 			world:remeffect(this)
 			return
@@ -557,11 +566,13 @@ w.c.playerclass = {
 					world:load(levelfile)
 					return
 				end
-			end
-			if state.mapfile then
-				state.current = 'map'
 			else
-				state.current = 'load'
+				world:unload()
+				if state.mapfile then
+					state.current = 'map'
+				else
+					state.current = 'loadmap'
+				end
 			end
 		end
 	end,
@@ -569,7 +580,7 @@ w.c.playerclass = {
 setmetatable(w.c.playerclass, {__index = w.c.entityclass})
 w.c.player = function(proto)
 	proto = proto or {}
-	proto.p = proto.p or {x = 128, y = -256, w = 0, h = 0}
+	proto.p = {x = 128, y = -256, w = 0, h = 0}
 	proto.hp = proto.hp or 100
 	proto.type = 'player'
 	proto.img = 'player.png'

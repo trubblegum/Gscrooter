@@ -5,12 +5,11 @@ state = require('state')
 gui = require('Gspot')
 world = require('Gscrooter') -- also brings us the marvels of player and ctrl
 
-current = nil
 
 love.load = function()
 	snd.click = love.audio.newSource('snd/click.ogg', 'static')
 	snd.load = love.audio.newSource('snd/load.ogg')
-	--
+	current = state[state.current]
 end
 
 love.update = function(dt)

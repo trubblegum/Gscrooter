@@ -136,7 +136,8 @@ local state = {
 					else
 						state.mapfile = nil
 						state.levelfile = '/map/'..state.loadmap.selectmap.value
-						state.current = 'world'
+						player = world.c.player()
+						world:load(state.levelfile)
 					end
 				end
 			end
@@ -202,7 +203,6 @@ local state = {
 					if i then
 						local level = line:sub(1, i - 1)
 						local obj = line:sub(i + 1)
-						--print('level = "'..level..'" obj = "'..obj..'"')
 						if love.filesystem.exists(state.mapfile..'/'..level..'.lvl') and obj then
 							obj = loadstring('return '..obj)
 							obj = obj()
@@ -216,7 +216,7 @@ local state = {
 							button.click = function(this)
 								state.levelfile = state.mapfile..'/'..this.label..'.lvl'
 								print(state.levelfile)
-								state.current = 'world'
+								world:load(state.levelfile)
 							end
 						end
 					end
@@ -237,11 +237,11 @@ local state = {
 		load = function(this)
 			if not this.gui then
 				this.gui = gui:new()
-				-- menu
-				button = this.gui:element(this.gui:button('Menu', {x = love.graphics.getWidth() - 144, y = 16, w = 128, h = 16}))
+				-- quit
+				button = this.gui:element(this.gui:button('Quit', {x = love.graphics.getWidth() - 144, y = 16, w = 128, h = 16}))
 				button.click = function(this)
 					world:unload()
-					state.mapfile = ''
+					player = world.c.player()
 					state.current = 'menu'
 				end
 				-- save input
@@ -265,7 +265,6 @@ local state = {
 						this.Gspot:setfocus(state.world.saveinput.id)
 					end
 				end
-				
 				-- prefs
 				button = this.gui:element(this.gui:button('Prefs', {x = love.graphics.getWidth() - 144, y = 80, w = 128, h = 16}))
 				button.click = function(this)
@@ -277,7 +276,7 @@ local state = {
 		end,
 		update = function(this, dt)
 			this.dt = dt
-			if not world.objects[1] then this:load() end
+			if not this.gui then this:load() end
 			world:update(dt)
 			this.gui:update(dt)
 		end,
