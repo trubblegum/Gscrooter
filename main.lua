@@ -1,13 +1,34 @@
+vector = require('vector')
+camera = require('camera')
 TS = require('Tserial')
+Gspot = require('Gspot')
+
 img = {}
 snd = {}
 state = require('state')
-gui = require('Gspot')
-world = require('Gscrooter') -- also brings us the marvels of player and ctrl
+world = require('world')
+classes = require('class')
+
+player = false
+ctrl = false
 
 focus = true
 
 love.load = function()
+	
+	classes:init()
+	player = classes.player()
+	ctrl = {
+		left = {key = 'a', cmd = player.left, label = 'Move Left'},
+		right = {key = 'd', cmd = player.right, label = 'Move right'},
+		jump = {key = 'w', cmd = player.jump, label = 'Jump'},
+		use = {key = 's', cmd = player.use, label = 'Use'},
+		slot1 = {key = 'f1', cmd = player.use, label = 'Slot 1'},
+		slot2 = {key = 'f2', cmd = player.use, label = 'Slot 2'},
+		slot3 = {key = 'f3', cmd = player.use, label = 'Slot 3'},
+		slot4 = {key = 'f4', cmd = player.use, label = 'Slot 4'},
+	}
+	
 	snd.click = love.audio.newSource('snd/click.ogg', 'static')
 	snd.load = love.audio.newSource('snd/load.ogg')
 	current = state[state.current]

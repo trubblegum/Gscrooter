@@ -8,4 +8,4 @@ portal {p = {x = 512, y = -384}, level = 'Gplace/level1'}
 hopperspawn {p = {x = 640, y = -128}}
 slitherspawn {p = {x = 1280, y = -256}}
 
-healtree {p = {x = 1280, y = -128}}
+healtree {p = {x = 1024, y = -128}}

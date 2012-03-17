@@ -5,7 +5,7 @@ local state = {
 	levelfile = '',
 	menu = {
 		load = function(this)
-			this.gui = gui:new()
+			this.gui = Gspot:new()
 			-- maps
 			local button = this.gui:element(this.gui:button('Load Map', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 160, w = 256, h = 16}))
 			button.click = function(this)
@@ -42,7 +42,7 @@ local state = {
 	prefs = {
 		load = function(this)
 			this.backdrop = love.graphics.newImage('gui/prefs.png')
-			this.gui = gui:new()
+			this.gui = Gspot:new()
 			-- quit
 			button = this.gui:element(this.gui:button('Back', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 64, w = 256, h = 16}))
 			button.click = function(this)
@@ -67,7 +67,7 @@ local state = {
 	loadplayer = {
 		load = function(this)
 			this.backdrop = love.graphics.newImage('gui/loadplayer.png')
-			this.gui = gui:new(this)
+			this.gui = Gspot:new(this)
 			-- menu
 			button = this.gui:element(this.gui:button('Menu', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 64, w = 256, h = 16}))
 			button.click = function(this)
@@ -82,7 +82,7 @@ local state = {
 						if l == 1 then
 							obj = TS:unpack(line)
 							if obj then
-								player = world.c.player(obj)
+								player = classes.player(obj)
 							else
 								break
 							end
@@ -125,7 +125,7 @@ local state = {
 	loadmap = {
 		load = function(this)
 			this.backdrop = love.graphics.newImage('gui/loadmap.png')
-			this.gui = gui:new(this)
+			this.gui = Gspot:new(this)
 			-- load
 			this.loadbutton = this.gui:element(this.gui:button('Continue', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 128, w = 256, h = 16}))
 			this.loadbutton.click = function(this)
@@ -136,7 +136,7 @@ local state = {
 					else
 						state.mapfile = nil
 						state.levelfile = '/map/'..state.loadmap.selectmap.value
-						player = world.c.player()
+						player = classes.player()
 						world:load(state.levelfile)
 					end
 				end
@@ -158,13 +158,15 @@ local state = {
 			files = love.filesystem.enumerate('/map')
 			local y = 0
 			for i, file in ipairs(files) do
-				if y == 0 then
-					this.selectmap.value = file
-				end
-				y = y + 16
-				option = this.gui:element(this.gui:option(file, {x = 0, y = y, w = this.selectmap.pos.w, h = 16}, file, this.selectmap.id))
-				option.dblclick = function(this)
-					state.loadmap.loadbutton:click()
+				if file:find('.lvl') or love.filesystem.isDirectory('/map/'..file) then
+					if y == 0 then
+						this.selectmap.value = file
+					end
+					y = y + 16
+					option = this.gui:element(this.gui:option(file, {x = 0, y = y, w = this.selectmap.pos.w, h = 16}, file, this.selectmap.id))
+					option.dblclick = function(this)
+						state.loadmap.loadbutton:click()
+					end
 				end
 			end
 		end,
@@ -184,7 +186,7 @@ local state = {
 			else
 				this.backdrop = love.graphics.newImage('gui/map.png')
 			end
-			this.gui = gui:new(this)
+			this.gui = Gspot:new(this)
 			-- prefs
 			button = this.gui:element(this.gui:button('Prefs', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 96, w = 256, h = 16}))
 			button.click = function(this)
@@ -236,12 +238,12 @@ local state = {
 		dt = 0,
 		load = function(this)
 			if not this.gui then
-				this.gui = gui:new()
+				this.gui = Gspot:new()
 				-- quit
 				button = this.gui:element(this.gui:button('Quit', {x = love.graphics.getWidth() - 144, y = 16, w = 128, h = 16}))
 				button.click = function(this)
 					world:unload()
-					player = world.c.player()
+					player = classes.player()
 					state.current = 'menu'
 				end
 				-- save input
