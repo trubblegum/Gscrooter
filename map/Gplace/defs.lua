@@ -257,7 +257,7 @@ local def = {
 
 	slitherspawn = {
 		parent = 'enemy',
-		load = function(this, classes, proto, class)
+		load = function(this, proto, class)
 			class = class or 'slitherspawn'
 			proto = proto or {}
 			proto.img = proto.img or 'slitherspawn.png'
