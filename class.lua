@@ -149,7 +149,7 @@ local c = {
 		end,
 		collide = function(this, condition)
 			condition = condition or 'true'
-			local c = this.filtercache[condition] or loadstring('return function(this, target) return '..condition..' end')()
+			local c = this.filtercache[condition] or loadstring('return function(obj) return '..condition..' end')()
 			if c then this.filtercache[condition] = c else print('failed to construct comparison : '..condition) end
 			--if this.filtercache[condition] then
 			--	c = this.filtercache[condition]
@@ -163,7 +163,7 @@ local c = {
 				-- /collision cache construction testing
 			--end
 			for i, obj in ipairs(world.objects) do
-				if obj ~= this and this.filtercache[condition](obj) and this:intersect(obj) then
+				if obj ~= this and c(obj) and this:intersect(obj) then
 					--print('check '..this.type..' for '..condition)
 					return obj
 				end
