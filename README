@@ -27,9 +27,13 @@ Note that all object class defs in a file are cached, and an object with an orph
 The first line in a .lvl is the floor, which defines the level's bounds (entity level objects wrap to level bounds)
 
 Objects are divided into object and effect level tables. Generally, collisions are only checked against the object table
-The default collision behaviour object.collide(this, obj, target) returns the first collision found using a filter function derived from the condition supplied by its optional second arg (string lua assertion, such as "obj.type == 'platform'" or obj == player).
-- obj is current object in an iteration over world.objects
-- target is an optional object instance to check against.
+The default collision behaviour object.collide(this, condition) returns the first object found by iterating over world.objects using the following filters :
+- obj ~= this
+- function c(obj) derived from the condition supplied by optional second arg to collide (string lua assertion, such as "obj.type == 'platform'" or obj == player)
+- - obj is the current object in an iteration over world.objects
+- inherited intersect(this, obj) which should be a collision check function.
+- - object.intersect(this, obj) is a basic bounding-box collision check.
+- - effect.intersect(this, obj) is a bounding-box collision check which accounts for this.scale
 Note that a reference to the player is always kept in global player.
 
 Object defs in level1.lvl are minimal, but you can customize any object by adding attributes and functions to the prototype, and even override individual objects' update(this, dt) and draw(this) functions. It is generally wise to call a lower order's update and draw at the end of an override function.
