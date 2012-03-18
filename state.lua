@@ -245,6 +245,8 @@ local state = {
 						end
 					end
 				end
+			else
+				print('no map/lvl defined for map : '..state.mapfile..'/map.lvl')
 			end
 		end,
 		update = function(this, dt)
@@ -320,7 +322,6 @@ local state = {
 					state.current = 'prefs'
 				end
 			end
-			world:load(state.levelfile)
 		end,
 		update = function(this, dt)
 			this.dt = dt

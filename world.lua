@@ -1,6 +1,4 @@
 local w = {
-	Gclass = nil, -- classes
-	loadparams = {def = nil, obj = nil},
 	gravity = 512,
 	ceiling = -1024,
 	objects = {},
@@ -31,14 +29,14 @@ local w = {
 					if classes.loadparams.def then
 						if pcall(function() classes.loadparams.proto = TS:unpack(classes.loadparams.proto) end) then
 							if classes[classes.loadparams.def] or classes:load() then
-								print('creating object from cached def : '..classes.loadparams.def)
+								print('creating object : '..classes.loadparams.def)
 								table.insert(this.objects, classes[classes.loadparams.def](classes.loadparams.proto))
 								--if pcall(function() table.insert(world.objects, classes[classes.loadparams.def](classes.loadparams.proto)) end) then
 								--else print('failed to create object : '..classes.loadparams.def) end
-							else print('failed to find object def : '..classes.loadparams.def) end
-						else print('failed to create object prototype : '..classes.loadparams.def..' ('..levelfile..' line '..linenum..')') end
-						classes.loadparams = {inc = classes.loadparams.inc}
+							else print('failed to load def : '..classes.loadparams.def) end
+						else print('failed to create object prototype : '..classes.loadparams.def) end
 					end
+					classes.loadparams = {}
 				end
 			end
 			player.p.x = 128

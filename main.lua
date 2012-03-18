@@ -16,7 +16,7 @@ focus = true
 love.load = function()
 	current = state[state.current]	
 	
-	classes:load('classdefault.lua')
+	classes:load('defsdefault.lua')
 	player = classes.player()
 	ctrl = {
 		{key = 'a', cmd = 'left', label = 'Move Left'},

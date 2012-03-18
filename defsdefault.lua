@@ -392,10 +392,10 @@ def = {
 			return classes.entity(proto, class)
 		end,
 		update = function(this, dt)
-			if this.hp < this.ohp then
-				-- hp regen
-				--this.hp = math.min(this.hp + (dt * 4), this.ohp)
-			end
+			-- hp regen
+			--if this.hp < this.ohp then
+			--this.hp = math.min(this.hp + (dt * 4), this.ohp)
+			--end
 			classes.entity.update(this, dt)
 		end,
 		fire = function(this, orig, dir)
@@ -404,16 +404,16 @@ def = {
 		use = function(this, dt, key, label)
 			portal = this:collide('obj.type == "portal"')
 			if portal then
-				world:unload()
 				if portal.level then
 					local levelfile = 'map/'..portal.level..'.lvl'
 					if love.filesystem.exists(levelfile) then
 						world:load(levelfile)
-						return
 					else
+						world:unload()
 						state.current = 'map'
 					end
 				else
+					world:unload()
 					if state.mapfile then
 						state.current = 'map'
 					else
