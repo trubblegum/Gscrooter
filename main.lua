@@ -9,29 +9,29 @@ state = require('state')
 world = require('world')
 classes = require('class')
 
-player = false
-ctrl = false
+current, player, ctrl = nil
 
 focus = true
 
 love.load = function()
+	current = state[state.current]	
 	
-	classes:init()
+	classes:load('classdefault.lua')
 	player = classes.player()
 	ctrl = {
-		left = {key = 'a', cmd = player.left, label = 'Move Left'},
-		right = {key = 'd', cmd = player.right, label = 'Move right'},
-		jump = {key = 'w', cmd = player.jump, label = 'Jump'},
-		use = {key = 's', cmd = player.use, label = 'Use'},
-		slot1 = {key = 'f1', cmd = player.use, label = 'Slot 1'},
-		slot2 = {key = 'f2', cmd = player.use, label = 'Slot 2'},
-		slot3 = {key = 'f3', cmd = player.use, label = 'Slot 3'},
-		slot4 = {key = 'f4', cmd = player.use, label = 'Slot 4'},
+		{key = 'a', cmd = 'left', label = 'Move Left'},
+		{key = 'd', cmd = 'right', label = 'Move right'},
+		{key = 'w', cmd = 'jump', label = 'Jump'},
+		{key = 's', cmd = 'use', label = 'Enter / Use'},
+		{key = 'f1', cmd = 'use', label = 'Slot 1'},
+		{key = 'f2', cmd = 'use', label = 'Slot 2'},
+		{key = 'f3', cmd = 'use', label = 'Slot 3'},
+		{key = 'f4', cmd = 'use', label = 'Slot 4'},
 	}
 	
 	snd.click = love.audio.newSource('snd/click.ogg', 'static')
 	snd.load = love.audio.newSource('snd/load.ogg')
-	current = state[state.current]
+	
 end
 
 love.update = function(dt)

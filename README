@@ -1,33 +1,48 @@
-Gscrooter is a super awesome platformer engine for LÖVE (a SCREWformer?), inpired by Gewter (see below), but rebuilt from the ground up.
+Gscrooter is a super awesome platformer engine for LÖVE (a SCREWformer?), inpired by Gewter (a demo of Gspot, see below), but rebuilt from the ground up.
 
 Kill the stuff! Count the hoppers! Protect your tree! Survive! Make your own levels! And more!
 
 ToDo :
-- extendable class system
+- scrolling backdrops
 - fill out sounds
 - add inventory
 - your idea here
 
+Editing :
 map/mapname/map.lvl defines a map, which links to levels
 map/mapname/map.png defines a background image for the map
 Levels in /map can be loaded directly
-If portal.level then load mapname/level else return to menu
+If portal.level (as mapdir/level) then load map else return to menu
 
-The first line in level.lvl is the floor, which defines the level's bounds (entity level objects wrap to level bounds)
+object defs will be loaded from (in this order) :
+- classesdefault.lua - automatically at startup
+- path specified in classes:load(path) - if forced
+- map/mapname/<objectname>.lua - if map loaded and no defs.lua found
+- map/mapname/defs.lua - if map loaded
+- map/<objectname>.lua - if no map and no defs.lua
+- map/defs.lua - if no map loaded
 
-Objects are divided into object and effect level tables. Generally, effects call this:collide(), which checks for collision against the object table, and returns the first collision.
-The exception to this is objects of level physicsobject or above (entity, player, enemy, etc)
+Note that all object class defs in a file are cached, and an object with an orphan def will not be loaded again if a matching def exists in cache. Use precedence to determine which def will load if multiple defs exist for the same class.
 
-object:collide() accepts a second parameter condition, which it uses to filter objects being checked.
-If type(condition) == 'string' then check against condition supplied
-If not condition then check all objects
+The first line in a .lvl is the floor, which defines the level's bounds (entity level objects wrap to level bounds)
+
+Objects are divided into object and effect level tables. Generally, collisions are only checked against the object table
+The default collision behaviour object.collide(this, obj, target) returns the first collision found using a filter function derived from the condition supplied by its optional second arg (string lua assertion, such as "obj.type == 'platform'" or obj == player).
+- obj is current object in an iteration over world.objects
+- target is an optional object instance to check against.
+Note that a reference to the player is always kept in global player.
 
 Object defs in level1.lvl are minimal, but you can customize any object by adding attributes and functions to the prototype, and even override individual objects' update(this, dt) and draw(this) functions. It is generally wise to call a lower order's update and draw at the end of an override function.
+Note that only object level objects are placed in a level file. Effects are generated on the fly and added using world:addeffect(classes.<objectname>(proto))
+Object instances can also be created at runtime using world:addobject(classes.<objectname>(proto))
 
 Some included example objects :
+in classesdefault.lua :
 - platform {p = {x, y, w}}
 - scenery {p = {x, y}, bg = 'treetop1.png'} -- behaves like a platform, but renders bg behind, centered and aligned to bottom
 - healtree {p = {x, y}, healing  = (HPS)} -- it has an AOE heal effect
+
+in map/Gplace/defs.lua :
 - hopper {{p = {x, y}, hp, damage = (DPS)} -- you know what this does
 - hopperspawn {} -- just because this is how I did it, doesn't mean you have to
 - bommer {}
@@ -37,8 +52,6 @@ Some included example objects :
 - slither {}
 - slitherspawn {}
 
-Note that only object level objects are placed in a level file. Effects are generated on the fly and added using world:addeffect()
-Objects can also be created at runtime using world:addobject()
-
 Includes an implementation of HUMP camera and vector from https://github.com/vrld/hump
+Includes a modified implementation of Tserial from https://love2d.org/wiki/TLTools
 Includes an implementation of Gspot from https://github.com/trubblegum/Gspot

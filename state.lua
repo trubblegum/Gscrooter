@@ -3,6 +3,7 @@ local state = {
 	prev = '',
 	mapfile = '',
 	levelfile = '',
+	loadparams = {},
 	menu = {
 		load = function(this)
 			this.gui = Gspot:new()
@@ -49,11 +50,24 @@ local state = {
 				state.current = state.prev
 			end
 			
-			this.gui:text(ctrl.left.key..' : Left', {x = 256, y = 256, w = 256, h = 16})
-			this.gui:text(ctrl.right.key..' : Right', {x = 256, y = 272, w = 256, h = 16})
-			this.gui:text(ctrl.jump.key..' : Jump', {x = 256, y = 288, w = 256, h = 16})
-			this.gui:text(ctrl.use.key..' : Use', {x = 256, y = 304, w = 256, h = 16})
-			this.gui:text('No custom controls yet', {x = 256, y = 336, w = 256, h = 16})
+			local y = 0
+			for i, c in ipairs(ctrl) do
+				local label = this.gui:text(c.label, {x = 336, y = 256 + y, w = 256, h = 16})
+				local input = this.gui:element(this.gui:input('', {x = -96, y = 0, w = 64, h = 16}, label))
+				input.value = c.key
+				input.ctrl = i
+				input.keypress = function(this, key, code)
+					this.value = key
+					this:done()
+				end
+				input.done = function(this)
+					ctrl[this.ctrl].key = this.value
+					this.Gspot:unfocus()
+				end
+
+				y = y + 16
+			end
+			this.gui:text('No custom controls yet', {x = 256, y = y, w = 256, h = 16})
 		end,
 		update = function(this, dt)
 			if not this.gui then this:load() end
@@ -75,32 +89,40 @@ local state = {
 			end
 			-- input
 			this.loadinput = this.gui:element(this.gui:input('', {x = 256, y = 256, w = 256, h = 16}))
+			if state.world.saveinput then this.loadinput.value = state.world.saveinput.value end
 			this.loadinput.done = function(this)
+				print('looking for player in : '..this.value..'.sav')
 				if love.filesystem.exists(this.value..'.sav') then
-					local l = 1
+					print('found player file : '..this.value..'.sav')
+					state.mapfile = nil
+					local linenum = 0
 					for line in love.filesystem.lines(this.value..'.sav') do
-						if l == 1 then
-							obj = TS:unpack(line)
-							if obj then
-								player = classes.player(obj)
-							else
-								break
-							end
-						elseif l == 2 then
+						linenum = linenum + 1
+						print('line '..linenum..' : '..line)
+						if linenum == 1 then
+							state.loadparams.player = line
+							if pcall(function() player = classes.player(TS:unpack(state.loadparams.player)) end) then
+								if state.world.saveinput then state.world.saveinput.value = this.value end
+								print('loaded player')
+							else print('failed to load player .. reverting to default') break end
+						elseif linenum == 2 then
 							if love.filesystem.exists(line) then
 								state.mapfile = line
-								state.current = 'map'
-							end
+								print('loaded map : '..line)
+							else print('invalid map, or no map saved') end
+						elseif linenum == 3 then
+							if pcall(function() ctrl = TS:unpack(line) end) then print('loaded controls')
+							else print('failed to load player controls .. reverting to default') end
 						end
-						l = l + 1
 					end
-					if l > 1 then state.current = 'loadmap' end
+					if state.mapfile then state.current = 'map' else state.current = 'loadmap' end
 				else
+					print('player file not found : '..this.value..'.sav')
 					feedback = this.Gspot:element(this.Gspot:text('No Such Player', {x = 0, y = 32, w = 256, h = 16}, state.loadplayer.loadinput.id))
 					feedback.alpha = 255
 					feedback.update = function(this, dt)
 						this.alpha = this.alpha - (255 * dt)
-						if this.alpha < 0 then this.Gspot:rem(this.id) end
+						if this.alpha < 0 then this.Gspot:rem(this.id) return end
 						local color = this.Gspot.color.fg
 						this.color = {color[1], color[2], color[3], this.alpha}
 					end
@@ -248,11 +270,35 @@ local state = {
 				end
 				-- save input
 				this.saveinput = this.gui:element(this.gui:input('', {x = love.graphics.getWidth() - 416, y = 48, w = 256, h = 16}))
+				if state.loadplayer.loadinput then this.saveinput.value = state.loadplayer.loadinput.value end
 				this.saveinput.done = function(this)
 					local p = {} -- insert relevant attributes
 					local str = TS:pack(p)
-					if state.mapfile then str = str..'\n'..state.mapfile end
-					love.filesystem.write(this.value..'.sav', str)
+					str = str..'\n'
+					if state.mapfile then str = str..state.mapfile end
+					str = str..'\n'..TS:pack(ctrl)
+					if pcall(function() love.filesystem.write(this.value..'.sav', str) end) then
+						if state.loadplayer.loadinput then state.world.saveinput.value = state.loadplayer.loadinput.value end
+						print('saved player file : '..this.value..'.sav')
+						feedback = this.Gspot:element(this.Gspot:text('Saved '..this.value, {x = love.graphics.getWidth() - 416, y = 48, w = 256, h = 16}))
+						feedback.alpha = 255
+						feedback.update = function(this, dt)
+							this.alpha = this.alpha - (255 * dt)
+							if this.alpha < 0 then this.Gspot:rem(this.id) return end
+							local color = this.Gspot.color.fg
+							this.color = {color[1], color[2], color[3], this.alpha}
+						end
+					else
+						print('failed to write player file : '..this.value..'.sav')
+						feedback = this.Gspot:element(this.Gspot:text('Unable to save '..this.value, {x = love.graphics.getWidth() - 416, y = 48, w = 256, h = 16}))
+						feedback.alpha = 255
+						feedback.update = function(this, dt)
+							this.alpha = this.alpha - (255 * dt)
+							if this.alpha < 0 then this.Gspot:rem(this.id) return end
+							local color = this.Gspot.color.fg
+							this.color = {color[1], color[2], color[3], this.alpha}
+						end
+					end
 					this.Gspot:unfocus()
 					this.display = false
 				end

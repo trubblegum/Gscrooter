@@ -16,81 +16,28 @@ local w = {
 			if obj == rem then table.remove(this.objects, i) break end
 		end
 	end,
-	getdef = function()
-		local inc
-		local filename = nil
-		if world.loadparams.inc and world.loadparams.inc[world.loadparams.def] then
-			return true
-		else
-			world.loadparams.filename = nil
-		end
-		if state.mapfile then
-			if love.filesystem.exists(state.mapfile..'/defs.lua') then
-				print('looking for def in : '..state.mapfile..'/defs.lua')
-				world.loadparams.filename = state.mapfile..'/defs.lua'
-			elseif love.filesystem.exists(state.mapfile..'/'..world.loadparams.def..'.lua') then
-				print('looking for def in : '..state.mapfile..'/'..world.loadparams.def..'.lua')
-				world.loadparams.filename = state.mapfile..'/'..world.loadparams.def..'.lua'
-			end
-		else
-			if love.filesystem.exists('/map/defs.lua') then
-				print('looking for def in : /map/defs.lua')
-				world.loadparams.filename = 'map/defs.lua'
-			elseif love.filesystem.exists('/map/'..world.loadparams.def..'.lua') then
-				print('looking for def in : /map/'..world.loadparams.def..'.lua')
-				world.loadparams.filename = '/map/'..world.loadparams.def..'.lua'
-			end
-		end
-		if world.loadparams.filename then
-			print('found : '..world.loadparams.filename)
-			if pcall(function() world.loadparams.inc = require(world.loadparams.filename) end) then
-				
-				return true
-			else
-				print('failed to create object def : '..world.loadparams.def)
-				return false
-			end
-		else
-			print('failed to find object def file : '..world.loadparams.def)
-			return false
-		end
-		return false
-	end,
 	load = function(this, levelfile)
 		this:unload()
 		if love.filesystem.exists(levelfile) then
 			local linenum = 0
+			print('loading level from file : '..levelfile)
 			for line in love.filesystem.lines(levelfile) do
 				linenum = linenum + 1
+				print('line '..linenum..' : '..line)
 				local i = line:find(' ', 1)
 				if i then
-					this.loadparams.def = line:sub(1, i - 1)
-					this.loadparams.proto = line:sub(i + 1)
-					if this.loadparams.def then
-						if pcall(function() world.loadparams.proto = TS:unpack(world.loadparams.proto) end) then
-							if classes[this.loadparams.def] then
-								print('creating object from cached def : '..this.loadparams.def)
-								table.insert(this.objects, classes[this.loadparams.def](this.loadparams.proto))
-								--if pcall(function() table.insert(world.objects, classes[world.loadparams.def](classes, world.loadparams.proto)) end) then
-								--else print('failed to create object : '..this.loadparams.def) end
-							elseif this.getdef() then
-								if this.loadparams.inc and this.loadparams.inc[this.loadparams.def] then
-									for k, v in pairs(this.loadparams.inc) do
-										this.loadparams.objk = k
-										this.loadparams.objv = v
-										if pcall(function() classes[world.loadparams.objk] = world.loadparams.objv end) then
-											--if pcall(function() setmetatable(classes[world.loadparams.objk], {__index = classes[classes[world.loadparams.objk].parent], __call = classes[world.loadparams.objk].load}) end) then
-											--else print('failed to set object dependency : '..this.loadparams.objk..' - '..classes[world.loadparams.objk].parent) end
-										else print('failed to insert object def : '..this.loadparams.objk) end
-									end
-									classes:init()
-									print('creating object from new def : '..this.loadparams.def)
-									table.insert(world.objects, classes[world.loadparams.def](world.loadparams.proto))
-									--if pcall(function() table.insert(world.objects, classes[world.loadparams.def](classes, world.loadparams.proto)) end) then
-									--else print('failed to create object : '..this.loadparams.def) end
-								else print('failed to load object : '..this.loadparams.def) end
-							else print('failed to find object def : '..this.loadparams.def) end
-						else print('failed to create object prototype : '..this.loadparams.def..' ('..levelfile..' line '..linenum..')') end
+					classes.loadparams.def = line:sub(1, i - 1)
+					classes.loadparams.proto = line:sub(i + 1)
+					if classes.loadparams.def then
+						if pcall(function() classes.loadparams.proto = TS:unpack(classes.loadparams.proto) end) then
+							if classes[classes.loadparams.def] or classes:load() then
+								print('creating object from cached def : '..classes.loadparams.def)
+								table.insert(this.objects, classes[classes.loadparams.def](classes.loadparams.proto))
+								--if pcall(function() table.insert(world.objects, classes[classes.loadparams.def](classes.loadparams.proto)) end) then
+								--else print('failed to create object : '..classes.loadparams.def) end
+							else print('failed to find object def : '..classes.loadparams.def) end
+						else print('failed to create object prototype : '..classes.loadparams.def..' ('..levelfile..' line '..linenum..')') end
+						classes.loadparams = {inc = classes.loadparams.inc}
 					end
 				end
 			end
@@ -119,7 +66,10 @@ local w = {
 	update = function(this, dt)
 		if not state.world.gui.focus then
 			for i, c in pairs(ctrl) do
-				if love.keyboard.isDown(c.key) then c.cmd(player, dt, c.key) end
+				if love.keyboard.isDown(c.key) then
+					if player[c.cmd] then player[c.cmd](player, dt, c.key, c.label)
+					elseif current[c.cmd] then current[c.cmd](current, dt, c.key, c.label) end
+				end
 			end
 		end
 		for i, obj in ipairs(this.effects) do obj:update(dt) end
