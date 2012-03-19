@@ -23,7 +23,7 @@ love.load = function()
 		{key = 'd', cmd = 'right', label = 'Move right', repeatable = true},
 		{key = 'w', cmd = 'jump', label = 'Jump'},
 		{key = 's', cmd = 'use', label = 'Enter / Use'},
-		{key = 'i', cmd = 'inv', label = 'Open / Close Inventory'},
+		{key = 'i', cmd = 'inv', label = 'Toggle Inventory'},
 		{key = 'f1', cmd = 'item', label = 'Slot 1', slot = 1},
 		{key = 'f2', cmd = 'item', label = 'Slot 2', slot = 2},
 		{key = 'f3', cmd = 'item', label = 'Slot 3', slot = 3},

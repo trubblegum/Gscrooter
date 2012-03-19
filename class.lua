@@ -62,7 +62,7 @@ local def = {
 	-- OBJECT
 	object = {
 		load = function(this, proto, class)
-			class = class or 'object'
+			class = class or this
 			local obj = {img = nil, p = {x = 0, y = 0}, s = 1}
 			if type(proto) == 'table' then for k, v in pairs(proto) do obj[k] = v end end
 			
@@ -82,9 +82,7 @@ local def = {
 			obj.p.w = obj.p.w or 0
 			obj.p.h = obj.p.h or 0
 			
-			if classes[class] then
-				return setmetatable(obj, {__index = classes[class]})
-			else print('failed to set dependency for new object : '..class) end
+			return setmetatable(obj, {__index = class})
 		end,
 		update = function(this, dt)
 			-- object does nothing on its own, update is only here to catch errant calls
@@ -148,7 +146,7 @@ local def = {
 	player = {
 		parent = 'entity',
 		load = function(this, proto, class)
-			class = class or 'player'
+			class = class or this
 			proto = proto or {}
 			proto.p = {x = 128, y = -256, w = 0, h = 0}
 			proto.hp = proto.hp or 100

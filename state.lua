@@ -50,10 +50,11 @@ local state = {
 				state.current = state.prev
 			end
 			
-			local y = 0
+			this.gui:text('Player Controls', {x = 256, y = 64, w = 256, h = 16})
+			local y = 32
 			for i, c in ipairs(ctrl) do
-				local label = this.gui:text(c.label, {x = 336, y = 256 + y, w = 256, h = 16})
-				local input = this.gui:element(this.gui:input('', {x = -96, y = 0, w = 64, h = 16}, label))
+				local label = this.gui:text(c.label, {x = 336, y = 64 + y, w = 256, h = 16})
+				local input = this.gui:element(this.gui:input('', {x = -80, y = 0, w = 64, h = 16}, label))
 				input.value = c.key
 				input.ctrl = i
 				input.keypress = function(this, key, code)
@@ -67,7 +68,6 @@ local state = {
 
 				y = y + 16
 			end
-			this.gui:text('No custom controls yet', {x = 256, y = y, w = 256, h = 16})
 		end,
 		update = function(this, dt)
 			if not this.gui then this:load() end
@@ -325,7 +325,6 @@ local state = {
 				--inventory
 				this.invgroup = this.gui:element(this.gui:group('Inventory', {x = 16, y = 16, w = 256, h = 16}))
 				this.invgroup.drag = true
-				this.invgroup.display = false
 				this.invgroup.load = function(this)
 					local children = this.Gspot:getchildren(this.id)
 					for i, child in ipairs(children) do
