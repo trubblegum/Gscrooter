@@ -78,24 +78,29 @@ local def = {
 					obj.p.w = img[obj.img]:getWidth()
 					obj.p.h = img[obj.img]:getHeight()
 				end
-			else
-				obj.p.w = obj.p.w or 0
-				obj.p.h = obj.p.h or 0
 			end
+			obj.p.w = obj.p.w or 0
+			obj.p.h = obj.p.h or 0
 			
 			if classes[class] then
 				return setmetatable(obj, {__index = classes[class]})
 			else print('failed to set dependency for new object : '..class) end
 		end,
 		update = function(this, dt)
-			-- object does nothing on its own
-			-- this is only here to catch errant calls
+			-- object does nothing on its own, update is only here to catch errant calls
 		end,
 		draw = function(this)
 			if img[this.img] then
 				local x = 0
 				while x < this.p.w do
-					if this.v and this.v.x > 0 then
+					if this.v and this.v.x ~= 0 then
+						if this.v.x > 0 then
+							this.s = -1
+						else
+							this.s = 1
+						end
+					end
+					if this.s < 0 then
 						love.graphics.draw(img[this.img], this.p.x + this.p.w + x, this.p.y, 0, -1, 1)
 					else
 						love.graphics.draw(img[this.img], this.p.x + x, this.p.y)
@@ -104,7 +109,9 @@ local def = {
 				end
 			else love.graphics.quad('fill', this.p.x, this.p.y, this.p.x + this.p.w, this.p.y, this.p.x + this.p.w, this.p.y + this.p.h, this.p.x, this.p.y + this.p.h) end
 		end,
-		filtercache = {},
+		filtercache = {
+			['true'] = function() return true end,
+		},
 		intersect = function(this, obj)
 			if this.p.x + this.p.w >= obj.p.x and this.p.x <= obj.p.x + obj.p.w then
 				if this.p.y + this.p.h >= obj.p.y and this.p.y <= obj.p.y + obj.p.h then
@@ -119,18 +126,92 @@ local def = {
 				if this.filtercache[condition] then
 					c = this.filtercache[condition]
 				else
-					c = assert(loadstring('return function(obj) return '..condition..' end'))()
-					if c then this.filtercache[condition] = c end
+					if type(condition) == 'function' then
+						c = condition
+						this.filtercache[condition] = condition
+					else
+						--c = loadstring('return function(obj) return '..condition..' end')() or function() return false end
+						c = assert(loadstring('return function(obj) return '..condition..' end'), 'error : bad filter function')()
+						this.filtercache[condition] = c
+					end
 				end
 			else
-				c = function() return true end
+				c = function() return false end
 			end
 			for i, obj in ipairs(world.objects) do
-				if obj ~= this and (c and c(obj)) and this:intersect(obj) then return obj end
+				if obj ~= this and c(obj) and this:intersect(obj) then return obj end
 			end
 			return false
 		end,
-	}
+	},
+	
+	player = {
+		parent = 'entity',
+		load = function(this, proto, class)
+			class = class or 'player'
+			proto = proto or {}
+			proto.p = {x = 128, y = -256, w = 0, h = 0}
+			proto.hp = proto.hp or 100
+			proto.type = 'player'
+			proto.img = 'player.png'
+			proto.slot = {
+				[1] = false,
+				[2] = false,
+				[3] = false,
+				[4] = false,
+				[5] = false,
+				[6] = false,
+				[7] = false,
+				[8] = false,
+			}
+			
+			return classes.entity(proto, class)
+		end,
+		update = function(this, dt)
+			-- hp regen
+			--if this.hp < this.ohp then
+			--this.hp = math.min(this.hp + (dt * 4), this.ohp)
+			--end
+			classes.entity.update(this, dt)
+		end,
+		fire = function(this, orig, dir)
+			table.insert(world.effects, classes.proj({p = orig, v = dir, orig = this}))
+		end,
+		use = function(this, key, slot)
+			item = this:collide('obj.type == "item"')
+			if item then this:pickup(item) else
+				item = this:collide('obj.type == "portal" or obj.type == "chest"')
+				if item then item:use(this) end
+			end
+		end,
+		item = function(this, key, slot)
+			if this.slot[slot] then
+				this.slot[slot]:use(player)
+				if this.slot[slot].q < 1 then
+					this.slot[slot] = false
+					state.world.invgroup:load()
+				end
+			end
+		end,
+		pickup = function(this, item)
+			for i, slot in ipairs(this.slot) do
+				if slot and slot.item == item.item then
+					slot.q = slot.q + 1
+					world:remobject(item)
+					state.world.invgroup:load()
+					return
+				end
+			end
+			for i, slot in ipairs(this.slot) do
+				if not slot then
+					this.slot[i] = classes[item.item](item)
+					world:remobject(item)
+					state.world.invgroup:load()
+					return
+				end
+			end
+		end,
+	},
 }
 
 return def

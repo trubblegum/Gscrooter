@@ -111,7 +111,7 @@ local state = {
 								print('loaded map : '..line)
 							else print('invalid map, or no map saved') end
 						elseif linenum == 3 then
-							if pcall(function() ctrl = TS:unpack(line) end) then print('loaded controls')
+							if pcall(function() ctrl = TS:unpack(line) end) then print('loaded player controls')
 							else print('failed to load player controls .. reverting to default') end
 						end
 					end
@@ -180,7 +180,7 @@ local state = {
 			files = love.filesystem.enumerate('/map')
 			local y = 0
 			for i, file in ipairs(files) do
-				if file:find('.lvl') or love.filesystem.isDirectory('/map/'..file) then
+				if file:find('.lvl') or (love.filesystem.isDirectory('/map/'..file) and love.filesystem.exists('/map/'..file..'/map.lvl')) then
 					if y == 0 then
 						this.selectmap.value = file
 					end
@@ -239,14 +239,14 @@ local state = {
 							button = this.gui:element(this.gui:image(level, {x = obj.x, y = obj.y, w = 64, h = 64}, obj.img))
 							button.click = function(this)
 								state.levelfile = state.mapfile..'/'..this.label..'.lvl'
-								print(state.levelfile)
 								world:load(state.levelfile)
 							end
 						end
 					end
 				end
 			else
-				print('no map/lvl defined for map : '..state.mapfile..'/map.lvl')
+				print('no map.lvl defined for map : '..state.mapfile)
+				state.current = 'loadmap'
 			end
 		end,
 		update = function(this, dt)
@@ -321,6 +321,29 @@ local state = {
 					state.prev = state.current
 					state.current = 'prefs'
 				end
+				
+				--inventory
+				this.invgroup = this.gui:element(this.gui:group('Inventory', {x = 16, y = 16, w = 256, h = 16}))
+				this.invgroup.drag = true
+				this.invgroup.display = false
+				this.invgroup.load = function(this)
+					local children = this.Gspot:getchildren(this.id)
+					for i, child in ipairs(children) do
+						this.Gspot:rem(child.id)
+					end
+					local x = 0
+					for i, slot in ipairs(player.slot) do
+						if slot then
+							local item = this.Gspot:element(this.Gspot:image(slot.q, {x = x, y = 16}, img[slot.img], state.world.invgroup.id))
+							item.display = state.world.invgroup.display
+							item.slot = i
+							item.click = function(this)
+								player:item(nil, this.slot)
+							end
+						end
+						x = x + 32
+					end
+				end
 			end
 		end,
 		update = function(this, dt)
@@ -335,6 +358,20 @@ local state = {
 		end,
 		mousepress = function(this, x, y, button)
 			world:mousepress(x, y, button)
+		end,
+		keypress = function(this, key, code)
+			if not state.world.gui.focus then
+				for i, c in pairs(ctrl) do
+					if key == c.key and not c.repeatable then
+						if player[c.cmd] then player[c.cmd](player, key, c.slot) break
+						elseif this[c.cmd] then this[c.cmd](this, key) break end
+					end
+				end
+			end
+		end,
+		inv = function(this, key)
+			if this.invgroup.display then this.gui:hide(this.invgroup.id)
+			else this.gui:show(this.invgroup.id) end
 		end,
 	},
 }

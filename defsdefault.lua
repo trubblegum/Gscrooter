@@ -49,6 +49,7 @@ def = {
 			class = class or 'effect'
 			proto = proto or {}
 			proto.v = proto.v or {x = 0, y = 0}
+			proto.alpha = proto.alpha or 255
 			
 			return classes.object(proto, class)
 		end,
@@ -67,7 +68,14 @@ def = {
 			if this.v.x < 0 then
 				this.v.x = math.min(this.v.x + (world.gravity * dt), 0)
 			end
-		end
+		end,
+		draw = function(this)
+			local color = {}
+			color.r, color.g, color.b, color.a = love.graphics.getColor()
+			love.graphics.setColor(255, 255, 255, math.floor(this.alpha))
+			love.graphics.draw(img[this.img], this.p.x, this.p.y)
+			love.graphics.setColor(color.r, color.g, color.b, color.a)
+		end,
 	},
 
 	proj = {
@@ -113,9 +121,8 @@ def = {
 			proto.img = proto.img or 'hit.png'
 			proto.v = proto.v or {x = 0, y = -128}
 			proto.scale = proto.scale or 0.1
-			proto.alpha = proto.alpha or 255
 			
-			return classes.object(proto, class)
+			return classes.effect(proto, class)
 		end,
 		update = function(this, dt)
 			this.scale = this.scale + (dt * 2)
@@ -224,14 +231,14 @@ def = {
 		load = function(this, proto, class)
 			class = class or 'death'
 			proto = proto or {}
-			proto.v = proto.v or {x = 0, y = -64}
+			--proto.v = proto.v or {x = 0, y = -256}
+			proto.v.y = proto.v.y - 128
 			proto.img = proto.img or 'object.png'
-			proto.alpha = proto.alpha or 255
 			
 			return classes.effect(proto, class)
 		end,
 		update = function(this, dt)
-			this.alpha = this.alpha - (128 * dt)
+			this.alpha = this.alpha - (255 * dt)
 			if this.alpha <= 0 then
 				if this.type == 'player' then
 					player = classes.player()
@@ -244,11 +251,7 @@ def = {
 			classes.effect.update(this, dt)
 		end,
 		draw = function(this)
-			local color = {}
-			color.r, color.g, color.b, color.a = love.graphics.getColor()
-			love.graphics.setColor(255, 255, 255, math.floor(this.alpha))
-			love.graphics.draw(img[this.img], this.p.x, this.p.y, 0, this.size, this.size, this.p.w / 2, this.p.h / 2)
-			love.graphics.setColor(color.r, color.g, color.b, color.a)
+			classes.effect.draw(this)
 		end,
 	},
 
@@ -312,6 +315,85 @@ def = {
 		end,
 	},
 
+	chest = {
+		parent = 'physics',
+		load = function(this, proto, class)
+			class = class or 'chest'
+			proto = proto or {}
+			proto.type = 'chest'
+			proto.img = proto.img or 'chest.png'
+			proto.contents = proto.contents or {}
+			
+			return classes.physics(proto, class)
+		end,
+		use = function(this)
+			for i, item in ipairs(this.contents) do
+				if classes[item] then
+					table.insert(world.objects, classes[item]({item = item, p = {x = this.p.x, y = this.p.y}, v = {x = (math.random() * 512) - 256, y = -128}}))
+				else print('attempt to create invalid item : '..item) end
+			end
+			this.img = 'chestopen.png'
+			table.insert(world.effects, classes.death(this))
+			world:remobject(this)
+		end,
+	},
+	
+	item = {
+		parent = 'physics',
+		load = function(this, proto, class)
+			class = class or 'item'
+			proto = proto or {}
+			proto.type = 'item'
+			proto.img = proto.img or 'object.png'
+			proto.item = proto.item or 'item'
+			proto.q = proto.q or 1
+			proto.age = 0
+			proto.life = 10
+			proto.alpha = 255
+			
+			return classes.physics(proto, class)
+		end,
+		update = function(this, dt)
+			this.age = this.age + dt
+			if this.age > this.life then
+				this.alpha = this.alpha - (255 * dt)
+				if this.alpha <= 0 then
+					world:remobject(this)
+					return
+				end
+			end
+			classes.physics.update(this, dt)
+		end,
+		draw = function(this)
+			classes.effect.draw(this)
+		end,
+		use = function(this, obj)
+			this.q = this.q - 1
+			state.world.invgroup:load()
+		end,
+	},
+	
+	itemhealth = {
+		parent = 'item',
+		load = function(this, proto, class)
+			class = class or 'itemhealth'
+			proto = proto or {}
+			proto.img = proto.img or 'itemhealth.png'
+			proto.item = proto.item or 'itemhealth'
+			proto.healing = proto.healing or 32
+			
+			return classes.item(proto, class)
+		end,
+		update = function(this, dt)
+			classes.item.update(this, dt)
+		end,
+		use = function(this, obj)
+			obj.hp = math.min(obj.hp + this.healing, obj.ohp)
+			table.insert(world.effects, classes.heal({p = {x = obj.p.x + (obj.p.w / 2), y = obj.p.y}}))
+			classes.item.use(this, obj)
+		end,
+	},
+	
 	portal = {
 		parent = 'physics',
 		load = function(this, proto, class)
@@ -322,8 +404,23 @@ def = {
 			
 			return classes.physics(proto, class)
 		end,
-		update = function(this, dt)
-			classes.physics.update(this, dt)
+		use = function(this)
+			if this.level then
+				local levelfile = 'map/'..this.level..'.lvl'
+				if love.filesystem.exists(levelfile) then
+					world:load(levelfile)
+				else
+					state.current = 'map'
+					world:unload()
+				end
+			else
+				if state.mapfile then
+					state.current = 'map'
+				else
+					state.current = 'loadmap'
+				end
+				world:unload()
+			end
 		end,
 	},
 
@@ -375,51 +472,6 @@ def = {
 		jump = function(this, dt)
 			if this.carrier then
 				this.v.y = 0 - (this.speed * 1.5)
-			end
-		end,
-	},
-
-	player = {
-		parent = 'entity',
-		load = function(this, proto, class)
-			class = class or 'player'
-			proto = proto or {}
-			proto.p = {x = 128, y = -256, w = 0, h = 0}
-			proto.hp = proto.hp or 100
-			proto.type = 'player'
-			proto.img = 'player.png'
-			
-			return classes.entity(proto, class)
-		end,
-		update = function(this, dt)
-			-- hp regen
-			--if this.hp < this.ohp then
-			--this.hp = math.min(this.hp + (dt * 4), this.ohp)
-			--end
-			classes.entity.update(this, dt)
-		end,
-		fire = function(this, orig, dir)
-			table.insert(world.effects, classes.proj({p = orig, v = dir, orig = this}))
-		end,
-		use = function(this, dt, key, label)
-			portal = this:collide('obj.type == "portal"')
-			if portal then
-				if portal.level then
-					local levelfile = 'map/'..portal.level..'.lvl'
-					if love.filesystem.exists(levelfile) then
-						world:load(levelfile)
-					else
-						world:unload()
-						state.current = 'map'
-					end
-				else
-					world:unload()
-					if state.mapfile then
-						state.current = 'map'
-					else
-						state.current = 'loadmap'
-					end
-				end
 			end
 		end,
 	},

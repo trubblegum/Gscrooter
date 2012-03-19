@@ -4,18 +4,9 @@ local w = {
 	objects = {},
 	effects = {},
 	cam = camera(vector(0, 0), 1, 0),
-	remeffect = function(this, rem)
-		for i, obj in pairs(this.effects) do
-			if obj == rem then table.remove(this.effects, i) break end
-		end
-	end,
-	remobject = function(this, rem)
-		for i, obj in pairs(this.objects) do
-			if obj == rem then table.remove(this.objects, i) break end
-		end
-	end,
 	load = function(this, levelfile)
 		this:unload()
+		if state.world.invgroup then state.world.invgroup:load() end
 		if love.filesystem.exists(levelfile) then
 			local linenum = 0
 			print('loading level from file : '..levelfile)
@@ -29,10 +20,8 @@ local w = {
 					if classes.loadparams.def then
 						if pcall(function() classes.loadparams.proto = TS:unpack(classes.loadparams.proto) end) then
 							if classes[classes.loadparams.def] or classes:load() then
-								print('creating object : '..classes.loadparams.def)
-								table.insert(this.objects, classes[classes.loadparams.def](classes.loadparams.proto))
-								--if pcall(function() table.insert(world.objects, classes[classes.loadparams.def](classes.loadparams.proto)) end) then
-								--else print('failed to create object : '..classes.loadparams.def) end
+								if pcall(function() table.insert(world.objects, classes[classes.loadparams.def](classes.loadparams.proto)) end) then print('added object : '..classes.loadparams.def)
+								else print('failed to add object : '..classes.loadparams.def..' (missing def.load() or bad prototype)') end
 							else print('failed to load def : '..classes.loadparams.def) end
 						else print('failed to create object prototype : '..classes.loadparams.def) end
 					end
@@ -64,9 +53,8 @@ local w = {
 	update = function(this, dt)
 		if not state.world.gui.focus then
 			for i, c in pairs(ctrl) do
-				if love.keyboard.isDown(c.key) then
-					if player[c.cmd] then player[c.cmd](player, dt, c.key, c.label)
-					elseif current[c.cmd] then current[c.cmd](current, dt, c.key, c.label) end
+				if love.keyboard.isDown(c.key) and c.repeatable then
+					if player[c.cmd] then player[c.cmd](player, dt, c.key) end
 				end
 			end
 		end
@@ -82,6 +70,16 @@ local w = {
 			for i, obj in ipairs(this.objects) do obj:draw() end
 			for i, obj in ipairs(this.effects) do obj:draw() end
 			this.cam:detach()
+		end
+	end,
+	remeffect = function(this, rem)
+		for i, obj in pairs(this.effects) do
+			if obj == rem then table.remove(this.effects, i) break end
+		end
+	end,
+	remobject = function(this, rem)
+		for i, obj in pairs(this.objects) do
+			if obj == rem then table.remove(this.objects, i) break end
 		end
 	end,
 	mousepress = function(this, x, y, button)

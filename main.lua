@@ -19,14 +19,19 @@ love.load = function()
 	classes:load('defsdefault.lua')
 	player = classes.player()
 	ctrl = {
-		{key = 'a', cmd = 'left', label = 'Move Left'},
-		{key = 'd', cmd = 'right', label = 'Move right'},
+		{key = 'a', cmd = 'left', label = 'Move Left', repeatable = true},
+		{key = 'd', cmd = 'right', label = 'Move right', repeatable = true},
 		{key = 'w', cmd = 'jump', label = 'Jump'},
 		{key = 's', cmd = 'use', label = 'Enter / Use'},
-		{key = 'f1', cmd = 'use', label = 'Slot 1'},
-		{key = 'f2', cmd = 'use', label = 'Slot 2'},
-		{key = 'f3', cmd = 'use', label = 'Slot 3'},
-		{key = 'f4', cmd = 'use', label = 'Slot 4'},
+		{key = 'i', cmd = 'inv', label = 'Open / Close Inventory'},
+		{key = 'f1', cmd = 'item', label = 'Slot 1', slot = 1},
+		{key = 'f2', cmd = 'item', label = 'Slot 2', slot = 2},
+		{key = 'f3', cmd = 'item', label = 'Slot 3', slot = 3},
+		{key = 'f4', cmd = 'item', label = 'Slot 4', slot = 4},
+		{key = 'f5', cmd = 'item', label = 'Slot 5', slot = 5},
+		{key = 'f6', cmd = 'item', label = 'Slot 6', slot = 6},
+		{key = 'f7', cmd = 'item', label = 'Slot 7', slot = 7},
+		{key = 'f8', cmd = 'item', label = 'Slot 8', slot = 8},
 	}
 	
 	snd.click = love.audio.newSource('snd/click.ogg', 'static')
@@ -75,5 +80,10 @@ love.keypressed = function(key, code)
 		elseif current.keypress then
 			current:keypress(key, code)
 		end
+	end
+end
+love.keypreleased = function(key, code)
+	if current.gui and current.keyrelease then
+		current:keyrelease(key, code)
 	end
 end
