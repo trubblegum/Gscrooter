@@ -329,7 +329,7 @@ def = {
 		use = function(this)
 			for i, item in ipairs(this.contents) do
 				if classes[item] then
-					table.insert(world.objects, classes[item]({item = item, p = {x = this.p.x, y = this.p.y}, v = {x = (math.random() * 512) - 256, y = -128}}))
+					table.insert(world.objects, classes[item]({item = item, p = {x = this.p.x + (this.p.w / 2), y = this.p.y}, v = {x = 256 - (math.random() * 512), y = -256}}))
 				else print('attempt to create invalid item : '..item) end
 			end
 			this.img = 'chestopen.png'

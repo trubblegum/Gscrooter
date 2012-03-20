@@ -352,7 +352,7 @@ local state = {
 				this.gui:hide(this.menugroup.id)
 
 				--inventory
-				this.invgroup = this.gui:element(this.gui:group('Inventory', {x = 16, y = 16, w = 256, h = 16}))
+				this.invgroup = this.gui:element(this.gui:group('Inventory', {x = 16, y = 16, w = 256, h = 48}))
 				this.invgroup.drag = true
 				this.invgroup.load = function(this)
 					local children = this.Gspot:getchildren(this.id)
@@ -364,9 +364,44 @@ local state = {
 						if slot then
 							local item = this.Gspot:element(this.Gspot:image(slot.q, {x = x, y = 16}, img[slot.img], state.world.invgroup.id))
 							item.display = state.world.invgroup.display
+							item.drag = true
 							item.slot = i
-							item.click = function(this)
+							item.dblclick = function(this)
 								player:item(nil, this.slot)
+							end
+							item.click = function(this)
+								this.parent = nil
+							end
+							item.drop = function(this, bucket)
+								local invgroup = state.world.invgroup
+								if bucket == invgroup.id then
+									this.parent = invgroup.id
+									i = 8
+									while i > 1 do
+										if this.pos.x >= invgroup.pos.x + ((i - 1) * 32) then
+											this.pos.x = (i - 1) * 32
+											this.pos.y = 16
+											if i ~= this.slot then
+												local item = classes[player.slot[this.slot].item]({player.slot[this.slot].q})
+												if player.slot[i] then
+													player.slot[this.slot] = classes[player.slot[i].item]({player.slot[i].q})
+												else
+													player.slot[this.slot] = false
+												end
+												player.slot[i] = item
+												this.slot = i
+												invgroup:load()
+											end
+											break
+										end
+										i = i - 1
+									end
+									print('slot = '..i)
+								elseif not bucket then
+									player:drop(this.slot)
+									this.Gspot:rem(this.id)
+									invgroup:load()
+								end
 							end
 						end
 						x = x + 32

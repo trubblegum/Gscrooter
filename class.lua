@@ -210,6 +210,11 @@ local def = {
 				end
 			end
 		end,
+		drop = function(this, slot)
+			table.insert(world.objects, classes[this.slot[slot].item]({q = this.slot[slot].q, p = {x = this.p.x + (this.p.w / 2), y = this.p.y}, v = {x = 256 - (math.random() * 512), y = -256}}))
+			this.slot[slot] = false
+		end,
+
 	},
 }
 
