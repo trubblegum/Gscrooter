@@ -191,7 +191,7 @@ local state = {
 						state.current = 'map'
 					else
 						state.mapfile = nil
-						state.levelfile = '/map/'..state.loadmap.selectmap.value
+						state.levelfile = '/map/'..state.loadmap.selectmap.value:sub(1, -5)
 						player = classes.player()
 						world:load(state.levelfile)
 					end
@@ -274,7 +274,7 @@ local state = {
 								end
 								button = this.gui:element(this.gui:image(level, {x = obj.x, y = obj.y, w = 64, h = 64}, obj.img))
 								button.click = function(this)
-									state.levelfile = state.mapfile..'/'..this.label..'.lvl'
+									state.levelfile = state.mapfile..'/'..this.label
 									world:load(state.levelfile)
 								end
 							end

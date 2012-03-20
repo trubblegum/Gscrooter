@@ -79,7 +79,7 @@ def = {
 	},
 
 	proj = {
-		parent = 'object',
+		parent = 'effect',
 		load = function(this, proto, class)
 			class = class or this
 			proto = proto or {}
@@ -87,21 +87,25 @@ def = {
 			proto.img = proto.img or 'bullet.png'
 			proto.v = proto.v or {x = 0, y = 0}
 			proto.age = proto.age or 0
-			proto.life = proto.life or 1
+			proto.life = proto.life or 0.75
 			proto.speed = proto.speed or 512
 			proto.damage = proto.damage or 16
 			
-			return classes.object(proto, class)
+			return classes.effect(proto, class)
 		end,
 		update = function(this, dt)
 			this.age = this.age + dt
 			if this.age > this.life then
-				world:remeffect(this)
-				return
+				if this.alpha < 0 then
+					world:remeffect(this)
+					return
+				else
+					this.alpha = this.alpha - (1024 * dt)
+				end
 			end
 			this.p.x = this.p.x + ((this.v.x * this.speed) * dt)
 			this.p.y = this.p.y + ((this.v.y * this.speed) * dt)
-			this.target = this:collide('obj.type ~= "portal"')
+			this.target = this:collide('notportal')
 			if this.target and this.target ~= this.orig then
 				if this.target.hp then
 					this.target.hp = this.target.hp - this.damage
@@ -172,7 +176,7 @@ def = {
 			return classes.hit(proto, class)
 		end,
 		update = function(this, dt)
-			this.target = this:collide('obj == player')
+			this.target = this:collide(player)
 			if this.target then
 				if this.target.hp then
 					this.target.hp = math.min(this.target.hp + (this.healing * dt), this.target.ohp)
@@ -194,7 +198,7 @@ def = {
 			return classes.hit(proto, class)
 		end,
 		update = function(this, dt)
-			this.target = this:collide('obj.type == "enemy"')
+			this.target = this:collide('enemy')
 			if this.target then
 				if this.target.hp then
 					this.target.hp = math.min(this.target.hp + (this.healing * dt), this.target.ohp)
@@ -216,7 +220,7 @@ def = {
 			return classes.hit(proto, class)
 		end,
 		update = function(this, dt)
-			this.target = this:collide('obj == player')
+			this.target = this:collide(player)
 			if this.target then
 				if this.target.hp then
 					this.target.hp = this.target.hp - (this.damage * dt)
@@ -278,7 +282,7 @@ def = {
 				this.p.x = ground.p.x
 			end
 			-- collision
-			this.carrier = this:collide('obj.type == "platform"')
+			this.carrier = this:collide('platform')
 			if this.carrier then
 				-- falling
 				if this.v.y >= 0 then
@@ -299,16 +303,16 @@ def = {
 			-- gravity
 			if not this.carrier then
 				if this.v.y < world.gravity * this.mass then
-					this.v.y = math.min(this.v.y + (world.gravity * this.mass * dt), world.gravity * this.mass)
+					this.v.y = math.min(this.v.y + ((world.gravity * this.mass) * dt), world.gravity * this.mass)
 				elseif this.v.y > world.gravity * this.mass then
-					this.v.y = math.max(this.v.y - (world.gravity * this.mass * dt), world.gravity * this.mass)
+					this.v.y = math.max(this.v.y - ((world.gravity * this.mass) * dt), world.gravity * this.mass)
 				end
 			end
 			-- resistance
 			if this.v.x > 0 then
-				this.v.x = math.max(this.v.x - (world.gravity * dt), 0)
+				this.v.x = math.max(this.v.x - ((world.gravity * this.mass) * dt), 0)
 			elseif this.v.x < 0 then
-				this.v.x = math.min(this.v.x + (world.gravity * dt), 0)
+				this.v.x = math.min(this.v.x + ((world.gravity * this.mass) * dt), 0)
 			end
 			
 			classes.object.update(this, dt)
@@ -406,12 +410,12 @@ def = {
 		end,
 		use = function(this)
 			if this.level then
-				local levelfile = 'map/'..this.level..'.lvl'
-				if love.filesystem.exists(levelfile) then
-					world:load(levelfile)
+				local levelfile = 'map/'..this.level
+				if love.filesystem.exists(levelfile..'.lvl') then world:load(levelfile)
 				else
 					state.current = 'map'
 					world:unload()
+					return
 				end
 			else
 				if state.mapfile then
@@ -517,7 +521,7 @@ def = {
 		end,
 		update = function(this, dt)
 			--damage player
-			local target = this:collide('obj == player')
+			local target = this:collide(player)
 			if target then
 				target.hp = target.hp - (this.damage * dt)
 			end

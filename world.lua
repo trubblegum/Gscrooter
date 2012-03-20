@@ -6,15 +6,11 @@ local w = {
 	cam = camera(vector(0, 0), 1, 0),
 	load = function(this, levelfile)
 		this:unload()
-		this.backdrop = love.graphics.newImage('map/backdrop.png')
-		this.backdrop:setWrap("repeat", "repeat")
-		this.quad = love.graphics.newQuad(0, 0, love.graphics.getWidth(), love.graphics.getHeight(), 1024, 1024)
-		
 		if state.world.invgroup then state.world.invgroup:load() end
-		if love.filesystem.exists(levelfile) then
+		if love.filesystem.exists(levelfile..'.lvl') then
 			local linenum = 0
-			print('loading level from file : '..levelfile)
-			for line in love.filesystem.lines(levelfile) do
+			print('loading level from file : '..levelfile..'.lvl')
+			for line in love.filesystem.lines(levelfile..'.lvl') do
 				linenum = linenum + 1
 				print('line '..linenum..' : '..line)
 				local i = line:find(' ', 1)
@@ -32,17 +28,24 @@ local w = {
 					classes.loadparams = {}
 				end
 			end
+			this:loadbackdrop(levelfile)
 			player.p.x = 128
 			player.p.y = -256
-			
 			table.insert(this.objects, player)
 			love.audio.play(snd.load)
 			state.current = 'world'
 		else
-			print('failed to find level file : '..levelfile)
+			print('failed to find level file : '..levelfile..'.lvl')
 			this:unload()
 			state.current = 'menu'
 		end
+	end,
+	loadbackdrop = function(this, levelfile)
+		if love.filesystem.exists(levelfile..'.png') then this.backdrop = love.graphics.newImage(levelfile..'.png')
+		elseif state.mapfile and love.filesystem.exists(state.mapfile..'/backdrop.png') then this.backdrop = love.graphics.newImage(mapfile..'/backdrop.png')
+		else this.backdrop = love.graphics.newImage('/map/backdrop.png') end
+		this.backdrop:setWrap("repeat", "repeat")
+		this.quad = love.graphics.newQuad(0, 0, love.graphics.getWidth(), love.graphics.getHeight(), this.backdrop:getWidth(), this.backdrop:getHeight())
 	end,
 	unload = function(this)
 		this.objects = {}

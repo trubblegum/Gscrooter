@@ -12,7 +12,7 @@ local def = {
 						print('failed to set dependency for object def : '..k..' - '..obj.parent)
 					else
 						setmetatable(obj, {__call = obj.load})
-						print('warning : no dependency defined for object def : '..k)
+						print('warning : invalid or no dependency defined for object def : '..k)
 					end
 				end
 			end
@@ -109,6 +109,12 @@ local def = {
 		end,
 		filtercache = {
 			['true'] = function() return true end,
+			platform = function(obj) return obj.type == 'platform' end,
+			enemy = function(obj) return obj.type == 'enemy' end,
+			friendly = function(obj) return obj.type == 'friendly' end,
+			usable = function(obj) return obj.type == 'portal' or obj.type == 'chest' end,
+			item = function(obj) return obj.type == 'item' end,
+			notportal = function(obj) return obj.type ~= 'portal' end,
 		},
 		intersect = function(this, obj)
 			if this.p.x + this.p.w >= obj.p.x and this.p.x <= obj.p.x + obj.p.w then
@@ -126,15 +132,18 @@ local def = {
 				else
 					if type(condition) == 'function' then
 						c = condition
-						this.filtercache[condition] = condition
-					else
+					elseif type(condition) == 'table' then
+						c = function(obj) return obj == condition end
+					elseif type(condition) == 'string' then
 						--c = loadstring('return function(obj) return '..condition..' end')() or function() return false end
-						c = assert(loadstring('return function(obj) return '..condition..' end'), 'error : bad filter function')()
+						c = assert(loadstring('return function(obj) return '..condition..' end'), 'error : malformed filter function')()
 						this.filtercache[condition] = c
+					else
+						c = function() print('invalid filter parameter') return false end
 					end
 				end
 			else
-				c = function() return false end
+				c = function() return true end
 			end
 			for i, obj in ipairs(world.objects) do
 				if obj ~= this and c(obj) and this:intersect(obj) then return obj end
@@ -177,9 +186,9 @@ local def = {
 			table.insert(world.effects, classes.proj({p = orig, v = dir, orig = this}))
 		end,
 		use = function(this, key, slot)
-			item = this:collide('obj.type == "item"')
+			item = this:collide('item')
 			if item then this:pickup(item) else
-				item = this:collide('obj.type == "portal" or obj.type == "chest"')
+				item = this:collide('usable')
 				if item then item:use(this) end
 			end
 		end,

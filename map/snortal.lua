@@ -10,22 +10,26 @@ local def = {
 			
 			proto.img = proto.img or 'portal.png' -- set the object's image, allowing override by supplied prototype
 			
+			proto.duration = 0
+			
 			return classes.object(proto, class) -- return a world-ready instance, created by the dependency chain (classes is the global class structure, where object classes live)
 			-- note : all constructors must trickle down to object
 		end,
 		update = function(this, dt) -- update was called from the instance, so now this is our instance
 			
 			this:collide('durrr') -- this will cause condition() to return nil, resulting in no collisions
+			this:collide('true') -- this will cause condition() to return true, resulting in collision with first object returned by intersect()
 			this:collide() -- as above
-			this:collide('true') -- this will cause condition() to return true, resulting in collision with first object encountered
 			this:collide('obj.type == "platform"') -- this will cause condition() to return true if obj is a platform, resulting in collision with the first platform encountered
-			this:collide(function(obj) return obj.type == 'platform' end) -- as above, but more efficient
+			this:collide('platform') -- as above, but more efficient, using a predefined condition
+			this:collide(function(obj) return obj.type == 'platform' end) -- as above, but more flexible
 			--this:collide(true) -- invalid
 			
 			-- usage :
-			local obj = this:collide('obj == player') -- player is the player, which can be accessed from global scope
+			local obj = this:collide('player') -- player is the player, which can be accessed from global scope
 			if obj then
-				print("you're in my personal space")
+				this.duration = this.duration + dt
+				print("you've been in my personal space for "..this.duration)
 			end
 			-- note : snortal is a horrible object, which just eats update cycles. try to keep calls to collide() down
 			

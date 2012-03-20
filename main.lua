@@ -13,7 +13,7 @@ love.load = function()
 		{key = 'd', cmd = 'right', label = 'Move right', repeatable = true},
 		{key = 'w', cmd = 'jump', label = 'Jump'},
 		{key = 's', cmd = 'use', label = 'Enter / Use'},
-		{key = 'i', cmd = 'inv', label = 'Toggle Inventory'},
+		{key = 'i', cmd = 'inv', label = 'Open / Close Inventory'},
 		{key = 'f1', cmd = 'item', label = 'Slot 1', slot = 1},
 		{key = 'f2', cmd = 'item', label = 'Slot 2', slot = 2},
 		{key = 'f3', cmd = 'item', label = 'Slot 3', slot = 3},
@@ -22,7 +22,7 @@ love.load = function()
 		{key = 'f6', cmd = 'item', label = 'Slot 6', slot = 6},
 		{key = 'f7', cmd = 'item', label = 'Slot 7', slot = 7},
 		{key = 'f8', cmd = 'item', label = 'Slot 8', slot = 8},
-		{key = 'escape', cmd = 'menu', label = 'Toggle Menu'},
+		{key = 'escape', cmd = 'menu', label = 'Open / Close Menu'},
 	}
 
 	state = require('state')
