@@ -45,7 +45,7 @@ local def = {
 			end
 		end
 		if this.loadparams.filename then
-			if pcall(function(this) this.loadparams.inc = require(this.loadparams.filename) end, this) then
+			if pcall(function(this) this.loadparams.inc = love.filesystem.load(this.loadparams.filename)() end, this) then
 				if this.loadparams.def and not this.loadparams.inc[this.loadparams.def] then print('warning : def file does not contain def : '..this.loadparams.def..' .. continuing') end
 				for k, v in pairs(this.loadparams.inc) do
 					this.loadparams.objk = k
@@ -65,14 +65,12 @@ local def = {
 			class = class or this
 			local obj = {img = nil, p = {x = 0, y = 0}, s = 1}
 			if type(proto) == 'table' then for k, v in pairs(proto) do obj[k] = v end end
-			
 			if type(obj.img) == 'string' then
 				if not img[obj.img] then
-					if love.filesystem.exists('img/'..obj.img) then
-						img[obj.img] = love.graphics.newImage('img/'..obj.img)
-					else
-						obj.img = nil
-					end
+					if love.filesystem.exists('img/'..obj.img) then img[obj.img] = love.graphics.newImage('img/'..obj.img)
+					elseif state.mapfile and love.filesystem.exists(state.mapfile..'/img/'..obj.img) then img[obj.img] = love.graphics.newImage(state.mapfile..'img/'..obj.img)
+					elseif love.filesystem.exists('/map/img/'..obj.img) then img[obj.img] = love.graphics.newImage('/map/img/'..obj.img)
+					else obj.img = nil end
 				end
 				if obj.img and ((not obj.p.w) or obj.p.w < img[obj.img]:getWidth()) then
 					obj.p.w = img[obj.img]:getWidth()
@@ -92,23 +90,17 @@ local def = {
 				local x = 0
 				while x < this.p.w do
 					if this.v and this.v.x ~= 0 then
-						if this.v.x > 0 then
-							this.s = -1
-						else
-							this.s = 1
-						end
+						if this.v.x > 0 then this.s = -1 else this.s = 1 end
 					end
-					if this.s < 0 then
-						love.graphics.draw(img[this.img], this.p.x + this.p.w + x, this.p.y, 0, -1, 1)
-					else
-						love.graphics.draw(img[this.img], this.p.x + x, this.p.y)
-					end
+					if this.s < 0 then love.graphics.draw(img[this.img], this.p.x + this.p.w + x, this.p.y, 0, -1, 1)
+					else love.graphics.draw(img[this.img], this.p.x + x, this.p.y) end
 					x = x + img[this.img]:getWidth()
 				end
 			else love.graphics.quad('fill', this.p.x, this.p.y, this.p.x + this.p.w, this.p.y, this.p.x + this.p.w, this.p.y + this.p.h, this.p.x, this.p.y + this.p.h) end
 		end,
 		filtercache = {
 			['true'] = function() return true end,
+			['false'] = function() return false end,
 			platform = function(obj) return obj.type == 'platform' end,
 			enemy = function(obj) return obj.type == 'enemy' end,
 			friendly = function(obj) return obj.type == 'friendly' end,
@@ -118,11 +110,9 @@ local def = {
 		},
 		intersect = function(this, obj)
 			if this.p.x + this.p.w >= obj.p.x and this.p.x <= obj.p.x + obj.p.w then
-				if this.p.y + this.p.h >= obj.p.y and this.p.y <= obj.p.y + obj.p.h then
-					return true
-				end
+				if this.p.y + this.p.h >= obj.p.y and this.p.y <= obj.p.y + obj.p.h then return true
+				else return false end
 			end
-			return false
 		end,
 		collide = function(this, condition)
 			local c = nil
@@ -139,14 +129,14 @@ local def = {
 						c = assert(loadstring('return function(obj) return '..condition..' end'), 'error : malformed filter function')()
 						this.filtercache[condition] = c
 					else
-						c = function() print('invalid filter parameter') return false end
+						print('invalid filter parameter')
+						c = function() return false end
 					end
 				end
-			else
-				c = function() return true end
-			end
+			else c = function() return true end end
+			
 			for i, obj in ipairs(world.objects) do
-				if obj ~= this and c(obj) and this:intersect(obj) then return obj end
+				if c(obj) and obj ~= this and this:intersect(obj) then return obj end
 			end
 			return false
 		end,
@@ -172,7 +162,6 @@ local def = {
 				[7] = false,
 				[8] = false,
 			}
-			
 			return classes.entity(proto, class)
 		end,
 		update = function(this, dt)

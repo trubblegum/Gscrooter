@@ -28,12 +28,19 @@ local w = {
 					classes.loadparams = {}
 				end
 			end
-			this:loadbackdrop(levelfile)
-			player.p.x = 128
-			player.p.y = -256
-			table.insert(this.objects, player)
-			love.audio.play(snd.load)
-			state.current = 'world'
+			if this.objects[1] then
+				this:loadbackdrop(levelfile)
+				player.p.x = 128
+				player.p.y = -256
+				table.insert(this.objects, player)
+				love.audio.play(snd.load)
+				state.current = 'world'
+				return
+			else
+				print('failed to load level')
+				this:unload()
+				state.current = 'menu'
+			end
 		else
 			print('failed to find level file : '..levelfile..'.lvl')
 			this:unload()
@@ -73,8 +80,6 @@ local w = {
 			local ground = this.objects[1]
 			this.cam.pos = vector(math.min(math.max(player.p.x + (player.p.w / 2), ground.p.x + (love.graphics.getWidth() / 2)), (ground.p.x + ground.p.w) - (love.graphics.getWidth() / 2)), player.p.y + (player.p.h / 2))
 			
-			--local x = math.floor()
-			--local y = math.floor()
 			this.quad:setViewport(this.cam.pos.x / 4, this.cam.pos.y / 8, love.graphics.getWidth(), love.graphics.getHeight())
 			love.graphics.drawq(this.backdrop, this.quad, 0, 0, 0, 1, 1)
 			
@@ -82,6 +87,8 @@ local w = {
 			for i, obj in ipairs(this.objects) do obj:draw() end
 			for i, obj in ipairs(this.effects) do obj:draw() end
 			this.cam:detach()
+		else
+			
 		end
 	end,
 	remeffect = function(this, rem)

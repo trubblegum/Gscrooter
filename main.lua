@@ -1,6 +1,5 @@
-
-
 love.load = function()
+	
 	vector = require('vector')
 	camera = require('camera')
 	TS = require('Tserial')
@@ -39,6 +38,18 @@ love.load = function()
 	
 	current = state[state.current]
 	focus = true
+	
+	io = {stdin = io.stdin, stdout = io.stdout, stderr = io.stderr}
+	os = {time = os.time}
+	dofile = nil
+	loadfile = nil
+	debug = nil
+	package.loaders = {package.loaders[1], package.loaders[2], package.loaders[3]}
+	package.loadlib = nil
+	package.loaded.debug = nil
+	package.loaded.io = nil
+	package.loaded.os = os
+	
 end
 
 love.update = function(dt)

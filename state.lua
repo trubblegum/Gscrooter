@@ -27,7 +27,7 @@ local state = {
 	end,
 	menu = {
 		load = function(this)
-			this.gui = Gspot:new()
+			this.gui = Gspot()
 			-- maps
 			local button = this.gui:element(this.gui:button('Load Map', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 160, w = 256, h = 16}))
 			button.click = function(this)
@@ -64,7 +64,7 @@ local state = {
 	prefs = {
 		load = function(this)
 			this.backdrop = love.graphics.newImage('gui/prefs.png')
-			this.gui = Gspot:new()
+			this.gui = Gspot()
 			-- quit
 			button = this.gui:element(this.gui:button('Back', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 64, w = 256, h = 16}))
 			button.click = function(this)
@@ -102,7 +102,7 @@ local state = {
 	loadplayer = {
 		load = function(this)
 			this.backdrop = love.graphics.newImage('gui/loadplayer.png')
-			this.gui = Gspot:new(this)
+			this.gui = Gspot()
 			-- menu
 			button = this.gui:element(this.gui:button('Menu', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 64, w = 256, h = 16}))
 			button.click = function(this)
@@ -180,7 +180,7 @@ local state = {
 	loadmap = {
 		load = function(this)
 			this.backdrop = love.graphics.newImage('gui/loadmap.png')
-			this.gui = Gspot:new(this)
+			this.gui = Gspot()
 			-- load
 			this.loadbutton = this.gui:element(this.gui:button('Continue', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 128, w = 256, h = 16}))
 			this.loadbutton.click = function(this)
@@ -237,12 +237,9 @@ local state = {
 	},
 	map = {
 		load = function(this)
-			if state.mapfile and love.filesystem.exists(state.mapfile..'/map.png') then
-				this.backdrop = love.graphics.newImage(state.mapfile..'/map.png')
-			else
-				this.backdrop = love.graphics.newImage('gui/map.png')
-			end
-			this.gui = Gspot:new(this)
+			if state.mapfile and love.filesystem.exists(state.mapfile..'/map.png') then this.backdrop = love.graphics.newImage(state.mapfile..'/map.png')
+			else this.backdrop = love.graphics.newImage('gui/map.png') end
+			this.gui = Gspot()
 			-- prefs
 			button = this.gui:element(this.gui:button('Prefs', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 96, w = 256, h = 16}))
 			button.click = function(this)
@@ -251,9 +248,7 @@ local state = {
 			end
 			-- menu
 			button = this.gui:element(this.gui:button('Menu', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 64, w = 256, h = 16}))
-			button.click = function(this)
-				state.current = 'menu'
-			end
+			button.click = function(this) state.current = 'menu' end
 			
 			if state.mapfile then
 				-- levels
@@ -299,7 +294,7 @@ local state = {
 		dt = 0,
 		load = function(this)
 			if not this.gui then
-				this.gui = Gspot:new()
+				this.gui = Gspot()
 				
 				-- menu
 				this.menugroup = this.gui:element(this.gui:hidden(nil, {x = love.graphics.getWidth() - 144, y = 0, w = 0, h = 0}))
