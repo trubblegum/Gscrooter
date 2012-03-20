@@ -1,23 +1,13 @@
-vector = require('vector')
-camera = require('camera')
-TS = require('Tserial')
-Gspot = require('Gspot')
 
-img = {}
-snd = {}
-state = require('state')
-world = require('world')
-classes = require('class')
-
-current, player, ctrl = nil
-
-focus = true
 
 love.load = function()
-	current = state[state.current]	
-	
-	classes:load('defsdefault.lua')
-	player = classes.player()
+	vector = require('vector')
+	camera = require('camera')
+	TS = require('Tserial')
+	Gspot = require('Gspot')
+
+	img = {}
+	snd = {}
 	ctrl = {
 		{key = 'a', cmd = 'left', label = 'Move Left', repeatable = true},
 		{key = 'd', cmd = 'right', label = 'Move right', repeatable = true},
@@ -32,11 +22,23 @@ love.load = function()
 		{key = 'f6', cmd = 'item', label = 'Slot 6', slot = 6},
 		{key = 'f7', cmd = 'item', label = 'Slot 7', slot = 7},
 		{key = 'f8', cmd = 'item', label = 'Slot 8', slot = 8},
+		{key = 'escape', cmd = 'menu', label = 'Toggle Menu'},
 	}
+
+	state = require('state')
+	world = require('world')
+	classes = require('class')
+
+	
+	classes:load('defsdefault.lua')
+	player = classes.player()
+	state:load()
 	
 	snd.click = love.audio.newSource('snd/click.ogg', 'static')
 	snd.load = love.audio.newSource('snd/load.ogg')
 	
+	current = state[state.current]
+	focus = true
 end
 
 love.update = function(dt)

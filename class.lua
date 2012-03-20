@@ -4,8 +4,8 @@ local def = {
 		if this:getdef(filename) then
 			for k, obj in pairs(this) do
 				if type(obj) == 'table' and not getmetatable(obj) then
-					if classes[obj.parent] then
-						setmetatable(obj, {__index = classes[obj.parent], __call = obj.load})
+					if this[obj.parent] then
+						setmetatable(obj, {__index = this[obj.parent], __call = obj.load})
 						print('set dependency for object def : '..k..' - '..obj.parent)
 					elseif obj.parent then
 						setmetatable(obj, {__call = obj.load})
@@ -45,12 +45,12 @@ local def = {
 			end
 		end
 		if this.loadparams.filename then
-			if pcall(function() this.loadparams.inc = require(this.loadparams.filename) end) then
+			if pcall(function(this) this.loadparams.inc = require(this.loadparams.filename) end, this) then
 				if this.loadparams.def and not this.loadparams.inc[this.loadparams.def] then print('warning : def file does not contain def : '..this.loadparams.def..' .. continuing') end
 				for k, v in pairs(this.loadparams.inc) do
 					this.loadparams.objk = k
 					this.loadparams.objv = v
-					if pcall(function() classes[classes.loadparams.objk] = classes.loadparams.objv end) then print('created object def : '..this.loadparams.objk)
+					if pcall(function(this) this[this.loadparams.objk] = this.loadparams.objv end, this) then print('created object def : '..this.loadparams.objk)
 					else print('failed to create def : '..this.loadparams.objk) end
 				end
 				return true
@@ -149,10 +149,11 @@ local def = {
 			class = class or this
 			proto = proto or {}
 			proto.p = {x = 128, y = -256, w = 0, h = 0}
-			proto.hp = proto.hp or 100
+			proto.ohp = 128
+			proto.hp = proto.hp or proto.ohp
 			proto.type = 'player'
 			proto.img = 'player.png'
-			proto.slot = {
+			proto.slot = proto.slot or {
 				[1] = false,
 				[2] = false,
 				[3] = false,
@@ -202,7 +203,7 @@ local def = {
 			end
 			for i, slot in ipairs(this.slot) do
 				if not slot then
-					this.slot[i] = classes[item.item](item)
+					this.slot[i] = classes[item.item]({q = item.q})
 					world:remobject(item)
 					state.world.invgroup:load()
 					return

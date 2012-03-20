@@ -1,9 +1,30 @@
 local state = {
 	current = 'menu',
-	prev = '',
-	mapfile = '',
-	levelfile = '',
+	prev = nil,
+	mapfile = nil,
+	levelfile = nil,
 	loadparams = {},
+	load = function(this)
+		for i, state in pairs(this) do
+			if type(state) == 'table' and state.load then state:load() end
+		end
+	end,
+	feedback = function(dest, label, pos)
+		pos = pos or {x = 256, y = 256}
+		pos.w = 256
+		pos.h = 16
+		local gui = state[dest].gui
+		if gui then
+			feedback = gui:element(gui:text(label, pos))
+			feedback.alpha = 255
+			feedback.update = function(this, dt)
+				this.alpha = this.alpha - (128 * dt)
+				if this.alpha < 0 then this.Gspot:rem(this.id) return end
+				local color = this.Gspot.color.fg
+				this.color = {color[1], color[2], color[3], this.alpha}
+			end
+		end
+	end,
 	menu = {
 		load = function(this)
 			this.gui = Gspot:new()
@@ -96,36 +117,48 @@ local state = {
 					print('found player file : '..this.value..'.sav')
 					state.mapfile = nil
 					local linenum = 0
+					local success
 					for line in love.filesystem.lines(this.value..'.sav') do
 						linenum = linenum + 1
 						print('line '..linenum..' : '..line)
 						if linenum == 1 then
-							state.loadparams.player = line
-							if pcall(function() player = classes.player(TS:unpack(state.loadparams.player)) end) then
-								if state.world.saveinput then state.world.saveinput.value = this.value end
-								print('loaded player')
-							else print('failed to load player .. reverting to default') break end
+							success, player = pcall(function(proto) return classes.player(proto) end, TS:unpack(line))
 						elseif linenum == 2 then
 							if love.filesystem.exists(line) then
 								state.mapfile = line
 								print('loaded map : '..line)
 							else print('invalid map, or no map saved') end
 						elseif linenum == 3 then
-							if pcall(function() ctrl = TS:unpack(line) end) then print('loaded player controls')
+							if pcall(function() ctrl = TS:unpack(line) end) then
+								print('loaded player controls')
 							else print('failed to load player controls .. reverting to default') end
 						end
 					end
-					if state.mapfile then state.current = 'map' else state.current = 'loadmap' end
+					if success then
+						if state.mapfile then
+							state.map:load()
+							state.current = 'map'
+						else
+							state.current = 'loadmap'
+						end
+						for i, slot in pairs(player.slot) do
+							if slot then
+								classes.loadparams.def = slot.item
+								if classes[slot.item] or classes:load() then
+									slot = classes[slot.item](slot)
+								else print('failed to load inventory item object def') end
+							end
+						end
+						if state.world.saveinput then state.world.saveinput.value = this.value end
+						print('loaded player')
+						state.feedback(state.current, 'Loaded '..state.loadplayer.loadinput.value)
+					else
+						print('failed to load player .. reverting to default')
+						state.feedback(state.current, 'Failed to Load '..state.loadplayer.loadinput.value)
+					end
 				else
 					print('player file not found : '..this.value..'.sav')
-					feedback = this.Gspot:element(this.Gspot:text('No Such Player', {x = 0, y = 32, w = 256, h = 16}, state.loadplayer.loadinput.id))
-					feedback.alpha = 255
-					feedback.update = function(this, dt)
-						this.alpha = this.alpha - (255 * dt)
-						if this.alpha < 0 then this.Gspot:rem(this.id) return end
-						local color = this.Gspot.color.fg
-						this.color = {color[1], color[2], color[3], this.alpha}
-					end
+					state.feedback(state.current, 'No Such Player saved', {x = state.loadplayer.loadinput.pos.x, y = state.loadplayer.loadinput.pos.y + 32})
 				end
 			end
 			-- load
@@ -154,6 +187,7 @@ local state = {
 				if state.loadmap.selectmap.value then
 					if love.filesystem.isDirectory('/map/'..state.loadmap.selectmap.value) then
 						state.mapfile = '/map/'..state.loadmap.selectmap.value
+						state.map:load()
 						state.current = 'map'
 					else
 						state.mapfile = nil
@@ -203,7 +237,7 @@ local state = {
 	},
 	map = {
 		load = function(this)
-			if love.filesystem.exists(state.mapfile..'/map.png') then
+			if state.mapfile and love.filesystem.exists(state.mapfile..'/map.png') then
 				this.backdrop = love.graphics.newImage(state.mapfile..'/map.png')
 			else
 				this.backdrop = love.graphics.newImage('gui/map.png')
@@ -220,33 +254,36 @@ local state = {
 			button.click = function(this)
 				state.current = 'menu'
 			end
-			-- levels
-			if love.filesystem.exists(state.mapfile..'/map.lvl') then
-				for line in love.filesystem.lines(state.mapfile..'/map.lvl') do
-					local i = line:find(' ', 1)
-					if i then
-						local level = line:sub(1, i - 1)
-						local obj = line:sub(i + 1)
-						if love.filesystem.exists(state.mapfile..'/'..level..'.lvl') and obj then
-							obj = loadstring('return '..obj)
-							obj = obj()
-							obj.img = ''
-							if love.filesystem.exists(state.mapfile..'/'..level..'.png') then
-								obj.img = state.mapfile..'/'..level..'.png'
-							else
-								obj.img = 'gui/mapportal.png'
-							end
-							button = this.gui:element(this.gui:image(level, {x = obj.x, y = obj.y, w = 64, h = 64}, obj.img))
-							button.click = function(this)
-								state.levelfile = state.mapfile..'/'..this.label..'.lvl'
-								world:load(state.levelfile)
+			
+			if state.mapfile then
+				-- levels
+				if love.filesystem.exists(state.mapfile..'/map.lvl') then
+					for line in love.filesystem.lines(state.mapfile..'/map.lvl') do
+						local i = line:find(' ', 1)
+						if i then
+							local level = line:sub(1, i - 1)
+							local obj = line:sub(i + 1)
+							if love.filesystem.exists(state.mapfile..'/'..level..'.lvl') and obj then
+								obj = loadstring('return '..obj)
+								obj = obj()
+								obj.img = ''
+								if love.filesystem.exists(state.mapfile..'/'..level..'.png') then
+									obj.img = state.mapfile..'/'..level..'.png'
+								else
+									obj.img = 'gui/mapportal.png'
+								end
+								button = this.gui:element(this.gui:image(level, {x = obj.x, y = obj.y, w = 64, h = 64}, obj.img))
+								button.click = function(this)
+									state.levelfile = state.mapfile..'/'..this.label..'.lvl'
+									world:load(state.levelfile)
+								end
 							end
 						end
 					end
+				else
+					print('no map.lvl defined for map : '..state.mapfile)
+					state.current = 'loadmap'
 				end
-			else
-				print('no map.lvl defined for map : '..state.mapfile)
-				state.current = 'loadmap'
 			end
 		end,
 		update = function(this, dt)
@@ -263,50 +300,39 @@ local state = {
 		load = function(this)
 			if not this.gui then
 				this.gui = Gspot:new()
+				
+				-- menu
+				this.menugroup = this.gui:element(this.gui:hidden(nil, {x = love.graphics.getWidth() - 144, y = 0, w = 0, h = 0}))
+				
 				-- quit
-				button = this.gui:element(this.gui:button('Quit', {x = love.graphics.getWidth() - 144, y = 16, w = 128, h = 16}))
+				button = this.gui:element(this.gui:button('Quit', {x = 0, y = 16, w = 128, h = 16}, this.menugroup.id))
 				button.click = function(this)
 					world:unload()
 					player = classes.player()
 					state.current = 'menu'
 				end
 				-- save input
-				this.saveinput = this.gui:element(this.gui:input('', {x = love.graphics.getWidth() - 416, y = 48, w = 256, h = 16}))
+				this.saveinput = this.gui:element(this.gui:input('', {x = -272, y = 48, w = 256, h = 16}, this.menugroup.id))
 				if state.loadplayer.loadinput then this.saveinput.value = state.loadplayer.loadinput.value end
 				this.saveinput.done = function(this)
-					local p = {} -- insert relevant attributes
+					local p = {hp = player.hp, slot = player.slot}
 					local str = TS:pack(p)
 					str = str..'\n'
 					if state.mapfile then str = str..state.mapfile end
 					str = str..'\n'..TS:pack(ctrl)
 					if pcall(function() love.filesystem.write(this.value..'.sav', str) end) then
 						if state.loadplayer.loadinput then state.world.saveinput.value = state.loadplayer.loadinput.value end
-						print('saved player file : '..this.value..'.sav')
-						feedback = this.Gspot:element(this.Gspot:text('Saved '..this.value, {x = love.graphics.getWidth() - 416, y = 48, w = 256, h = 16}))
-						feedback.alpha = 255
-						feedback.update = function(this, dt)
-							this.alpha = this.alpha - (255 * dt)
-							if this.alpha < 0 then this.Gspot:rem(this.id) return end
-							local color = this.Gspot.color.fg
-							this.color = {color[1], color[2], color[3], this.alpha}
-						end
+						print('wrote player file : '..this.value..'.sav')
+						state.feedback(state.current, 'Saved '..this.value, {x = love.graphics.getWidth() - 416, y = 48})
 					else
 						print('failed to write player file : '..this.value..'.sav')
-						feedback = this.Gspot:element(this.Gspot:text('Unable to save '..this.value, {x = love.graphics.getWidth() - 416, y = 48, w = 256, h = 16}))
-						feedback.alpha = 255
-						feedback.update = function(this, dt)
-							this.alpha = this.alpha - (255 * dt)
-							if this.alpha < 0 then this.Gspot:rem(this.id) return end
-							local color = this.Gspot.color.fg
-							this.color = {color[1], color[2], color[3], this.alpha}
-						end
+						state.feedback(state.current, 'Unable to save '..this.value, {x = love.graphics.getWidth() - 416, y = 48})
 					end
 					this.Gspot:unfocus()
 					this.display = false
 				end
-				this.saveinput.display = false
 				-- save button
-				button = this.gui:element(this.gui:button('Save', {x = love.graphics.getWidth() - 144, y = 48, w = 128, h = 16}))
+				button = this.gui:element(this.gui:button('Save', {x = 0, y = 48, w = 128, h = 16}, this.menugroup.id))
 				button.click = function(this)
 					if state.world.saveinput.display then
 						state.world.saveinput:done()
@@ -316,12 +342,15 @@ local state = {
 					end
 				end
 				-- prefs
-				button = this.gui:element(this.gui:button('Prefs', {x = love.graphics.getWidth() - 144, y = 80, w = 128, h = 16}))
+				button = this.gui:element(this.gui:button('Prefs', {x = 0, y = 80, w = 128, h = 16}, this.menugroup.id))
 				button.click = function(this)
 					state.prev = state.current
 					state.current = 'prefs'
 				end
 				
+				-- hide the menu
+				this.gui:hide(this.menugroup.id)
+
 				--inventory
 				this.invgroup = this.gui:element(this.gui:group('Inventory', {x = 16, y = 16, w = 256, h = 16}))
 				this.invgroup.drag = true
@@ -371,6 +400,13 @@ local state = {
 		inv = function(this, key)
 			if this.invgroup.display then this.gui:hide(this.invgroup.id)
 			else this.gui:show(this.invgroup.id) end
+		end,
+		menu = function(this, key)
+			if this.menugroup.display then this.gui:hide(this.menugroup.id)
+			else
+				this.gui:show(this.menugroup.id)
+				this.saveinput.display = false
+			end
 		end,
 	},
 }

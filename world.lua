@@ -6,6 +6,10 @@ local w = {
 	cam = camera(vector(0, 0), 1, 0),
 	load = function(this, levelfile)
 		this:unload()
+		this.backdrop = love.graphics.newImage('map/backdrop.png')
+		this.backdrop:setWrap("repeat", "repeat")
+		this.quad = love.graphics.newQuad(0, 0, love.graphics.getWidth(), love.graphics.getHeight(), 1024, 1024)
+		
 		if state.world.invgroup then state.world.invgroup:load() end
 		if love.filesystem.exists(levelfile) then
 			local linenum = 0
@@ -64,8 +68,13 @@ local w = {
 	draw = function(this, dt)
 		if this.objects[1] then
 			local ground = this.objects[1]
-			--this.cam.pos = vector(math.min(math.max((player.p.x + (player.p.w / 2)) - (player.v.x * dt), ground.p.x + (love.graphics.getWidth() / 2)), (ground.p.x + ground.p.w) - (love.graphics.getWidth() / 2)), (player.p.y + player.p.h) - (player.v.y * dt))
-			this.cam.pos = vector(math.min(math.max(player.p.x + (player.p.w / 2), ground.p.x + (love.graphics.getWidth() / 2)), (ground.p.x + ground.p.w) - (love.graphics.getWidth() / 2)), player.p.y + player.p.h)
+			this.cam.pos = vector(math.min(math.max(player.p.x + (player.p.w / 2), ground.p.x + (love.graphics.getWidth() / 2)), (ground.p.x + ground.p.w) - (love.graphics.getWidth() / 2)), player.p.y + (player.p.h / 2))
+			
+			--local x = math.floor()
+			--local y = math.floor()
+			this.quad:setViewport(this.cam.pos.x / 4, this.cam.pos.y / 8, love.graphics.getWidth(), love.graphics.getHeight())
+			love.graphics.drawq(this.backdrop, this.quad, 0, 0, 0, 1, 1)
+			
 			this.cam:attach()
 			for i, obj in ipairs(this.objects) do obj:draw() end
 			for i, obj in ipairs(this.effects) do obj:draw() end
