@@ -8,7 +8,7 @@ platform {p = {x = 768, y = -576}, img = 'platform2.png'}
 
 portal {p = {x = 512, y = -384}, level = 'Gplace/level1'}
 
-chest {p = {x = 544, y = -576}, contents = {'itemhealth', 'itemgrenade'}}
+chest {p = {x = 544, y = -576}, contents = {'itemheal', 'itemgrenade'}}
 
 hopperspawn {p = {x = 640, y = -128}}
 buzzerspawn {p = {x = 768, y = -512}}

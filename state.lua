@@ -11,8 +11,8 @@ local state = {
 	end,
 	feedback = function(dest, label, pos)
 		pos = pos or {x = 256, y = 256}
-		pos.w = 256
-		pos.h = 16
+		pos.w = pos.w or 256
+		pos.h = pos.h or 16
 		local gui = state[dest].gui
 		if gui then
 			feedback = gui:element(gui:text(label, pos))

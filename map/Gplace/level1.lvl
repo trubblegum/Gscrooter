@@ -9,7 +9,7 @@ platform {p = {x = 1536, y = -128}, img = 'platform1.png'}
 	
 portal {p = {x = 1302, y = -364}, level = 'Gplace/level2'}
 
-chest {p = {x = 512, y = -320}, contents = {'itemhealth', 'itemgrenade'}}
+chest {p = {x = 512, y = -320}, contents = {'itemheal', 'itemgrenade', 'itemgrenade', 'itemgrenade', 'itemgrenade', 'itemgrenade', 'itemgrenade'}}
 
 hopperspawn {p = {x = 640, y = -128}}
 hopperspawn {p = {x = 1792, y = -128}}
