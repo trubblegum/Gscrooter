@@ -24,6 +24,7 @@ local def = {
 			this:collide('platform') -- as above, but more efficient, using a predefined condition
 			this:collide(function(obj) return obj.type == 'platform' end) -- as above, but more flexible
 			--this:collide(true) -- invalid
+			-- Note that AOE.collide returns a table of all objects which intersect
 			
 			-- usage :
 			local obj = this:collide('player') -- player is the player, which can be accessed from global scope

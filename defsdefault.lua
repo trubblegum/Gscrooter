@@ -144,29 +144,45 @@ def = {
 			return classes.hit(proto, class)
 		end
 	},
-
-	AOEheal = {
-		parent = 'hit',
+	
+	AOE = {
+		parent= 'hit',
 		load = function(this, proto, class)
 			class = class or this
 			proto = proto or {}
-			proto.img = proto.img or 'heal.png'
-			proto.healing = proto.healing or 16
-			proto.scale = proto.scale or 1
-			
 			return classes.hit(proto, class)
 		end,
-		update = function(this, dt)
-			this.target = this:collide(player)
-			if this.target then
-				if this.target.hp then this.target.hp = math.min(this.target.hp + (this.healing * dt), this.target.ohp) end
+		collide = function(this, condition)
+			local c = nil
+			if condition then
+				if this.filtercache[condition] then
+					c = this.filtercache[condition]
+				else
+					if type(condition) == 'function' then
+						c = condition
+					elseif type(condition) == 'table' then
+						c = function(obj) return obj == condition end
+					elseif type(condition) == 'string' then
+						--c = loadstring('return function(obj) return '..condition..' end')() or function() return false end
+						c = assert(loadstring('return function(obj) return '..condition..' end'), 'error : malformed filter function')()
+						this.filtercache[condition] = c
+					else
+						print('invalid filter parameter')
+						c = function() return false end
+					end
+				end
+			else c = function() return true end end
+			
+			local targets = {}
+			for i, obj in ipairs(world.objects) do
+				if c(obj) and obj ~= this and this:intersect(obj) then table.insert(targets, obj) end
 			end
-			classes.hit.update(this, dt)
+			if targets[1] then return targets else return false end
 		end,
 	},
-
-	enemyAOEheal = {
-		parent = 'hit',
+	
+	AOEheal = {
+		parent = 'AOE',
 		load = function(this, proto, class)
 			class = class or this
 			proto = proto or {}
@@ -174,17 +190,65 @@ def = {
 			proto.healing = proto.healing or 16
 			proto.scale = proto.scale or 1
 			
-			return classes.hit(proto, class)
+			return classes.AOE(proto, class)
 		end,
 		update = function(this, dt)
-			this.target = this:collide('enemy')
-			if this.target and this.target.hp then this.target.hp = math.min(this.target.hp + (this.healing * dt), this.target.ohp) end
-			classes.hit.update(this, dt)
+			local targets = this:collide(player)
+			if targets then
+				for i, target in ipairs(targets) do
+					if target.hp then target.hp = math.min(target.hp + (this.healing * dt), target.ohp) end
+				end
+			end
+			classes.AOE.update(this, dt)
 		end,
 	},
-
+	
+	enemyAOEheal = {
+		parent = 'AOE',
+		load = function(this, proto, class)
+			class = class or this
+			proto = proto or {}
+			proto.img = proto.img or 'heal.png'
+			proto.healing = proto.healing or 16
+			proto.scale = proto.scale or 1
+			
+			return classes.AOE(proto, class)
+		end,
+		update = function(this, dt)
+			local targets = this:collide('enemy')
+			if targets then
+				for i, target in ipairs(targets) do
+					if target.hp then target.hp = math.min(target.hp + (this.healing * dt), target.ohp) end
+				end
+			end
+			classes.AOE.update(this, dt)
+		end,
+	},
+	
+	AOEdamage = {
+		parent = 'AOE',
+		load = function(this, proto, class)
+			class = class or this
+			proto = proto or {}
+			proto.img = proto.img or 'fire.png'
+			proto.damage = proto.damage or 32
+			proto.scale = proto.scale or 1
+			
+			return classes.AOE(proto, class)
+		end,
+		update = function(this, dt)
+			local targets = this:collide('notportal')
+			if targets then
+				for i, target in ipairs(targets) do
+					if target.hp then target.hp = target.hp - (this.damage * dt) end
+				end
+			end
+			classes.AOE.update(this, dt)
+		end,
+	},
+	
 	AOEpoison = {
-		parent = 'hit',
+		parent = 'AOE',
 		load = function(this, proto, class)
 			class = class or this
 			proto = proto or {}
@@ -192,12 +256,16 @@ def = {
 			proto.damage = proto.damage or 16
 			proto.scale = proto.scale or 0.5
 			
-			return classes.hit(proto, class)
+			return classes.AOE(proto, class)
 		end,
 		update = function(this, dt)
-			this.target = this:collide(player)
-			if this.target and this.target.hp then this.target.hp = this.target.hp - (this.damage * dt) end
-			classes.hit.update(this, dt)
+			local targets = this:collide(player)
+			if targets then
+				for i, target in ipairs(targets) do
+					if target.hp then target.hp = target.hp - (this.damage * dt) end
+				end
+			end
+			classes.AOE.update(this, dt)
 		end,
 	},
 
@@ -345,6 +413,44 @@ def = {
 		use = function(this, obj)
 			obj.hp = math.min(obj.hp + this.healing, obj.ohp)
 			table.insert(world.effects, classes.heal({p = {x = obj.p.x + (obj.p.w / 2), y = obj.p.y}}))
+			classes.item.use(this, obj)
+		end,
+	},
+	
+	itemgrenade = {
+		parent = 'item',
+		load = function(this, proto, class)
+			class = class or this
+			proto = proto or {}
+			proto.img = proto.img or 'itemgrenade.png'
+			proto.item = proto.item or 'itemgrenade'
+			proto.healing = proto.healing or 32
+			
+			return classes.item(proto, class)
+		end,
+		update = function(this, dt)
+			if this.active then
+				local target = this:collide('notportal')
+				if (target and target ~= this.orig) or this.age > 3 then
+					table.insert(world.effects, classes.AOEdamage({p = {x = this.p.x + (this.p.w / 2), y = this.p.y}, damage = 128, scale = 2}))
+					local i = 1
+					while i < 9 do
+						local dir = {x = 1 - (math.random() * 2), y = 1 - (math.random() * 2)}
+						table.insert(world.effects, classes.proj({p = {x = this.p.x, y = this.p.y}, v = dir}))
+						i = i + 1
+					end
+					world:remeffect(this)
+				end
+			end
+			classes.item.update(this, dt)
+		end,
+		use = function(this, obj)
+			local x, y = love.mouse.getX(), love.mouse.getY()
+			local c = world.cam:worldCoords(vector(x, y))
+			local orig = {x = player.p.x + (player.p.w / 2), y = player.p.y + (player.p.h / 2)}
+			local rel = vector(c.x - orig.x, c.y - orig.y):normalize_inplace()
+			rel = rel * 512
+			table.insert(world.effects, classes.itemgrenade({p = {x = obj.p.x + (obj.p.w / 2), y = obj.p.y}, v = rel, active = true, orig = player}))
 			classes.item.use(this, obj)
 		end,
 	},
