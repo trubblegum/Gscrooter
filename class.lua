@@ -98,7 +98,7 @@ local def = {
 				end
 			else love.graphics.quad('fill', this.p.x, this.p.y, this.p.x + this.p.w, this.p.y, this.p.x + this.p.w, this.p.y + this.p.h, this.p.x, this.p.y + this.p.h) end
 		end,
-		filtercache = {
+		filters = {
 			['true'] = function() return true end,
 			['false'] = function() return false end,
 			platform = function(obj) return obj.type == 'platform' end,
@@ -108,6 +108,26 @@ local def = {
 			item = function(obj) return obj.type == 'item' end,
 			notportal = function(obj) return obj.type ~= 'portal' end,
 		},
+		getfilter = function(this, condition)
+			if condition then
+				if this.filters[condition] then
+					return this.filters[condition]
+				else
+					if type(condition) == 'function' then
+						return condition
+					elseif type(condition) == 'table' then
+						return function(obj) return obj == condition end
+					elseif type(condition) == 'string' then
+						--c = loadstring('return function(obj) return '..condition..' end')() or function() return false end
+						this.filters[condition] = assert(loadstring('return function(obj) return '..condition..' end'), 'error : malformed collision filter condition')()
+						return this.filters[condition]
+					else
+						print('invalid filter parameter')
+						return function() return false end
+					end
+				end
+			else return function() return true end end
+		end,
 		intersect = function(this, obj)
 			if this.p.x + this.p.w >= obj.p.x and this.p.x <= obj.p.x + obj.p.w then
 				if this.p.y + this.p.h >= obj.p.y and this.p.y <= obj.p.y + obj.p.h then return true
@@ -115,26 +135,7 @@ local def = {
 			end
 		end,
 		collide = function(this, condition)
-			local c = nil
-			if condition then
-				if this.filtercache[condition] then
-					c = this.filtercache[condition]
-				else
-					if type(condition) == 'function' then
-						c = condition
-					elseif type(condition) == 'table' then
-						c = function(obj) return obj == condition end
-					elseif type(condition) == 'string' then
-						--c = loadstring('return function(obj) return '..condition..' end')() or function() return false end
-						c = assert(loadstring('return function(obj) return '..condition..' end'), 'error : malformed filter function')()
-						this.filtercache[condition] = c
-					else
-						print('invalid filter parameter')
-						c = function() return false end
-					end
-				end
-			else c = function() return true end end
-			
+			local c = this:getfilter(condition)
 			for i, obj in ipairs(world.objects) do
 				if c(obj) and obj ~= this and this:intersect(obj) then return obj end
 			end

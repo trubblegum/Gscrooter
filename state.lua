@@ -66,7 +66,7 @@ local state = {
 			this.backdrop = love.graphics.newImage('gui/prefs.png')
 			this.gui = Gspot()
 			-- quit
-			button = this.gui:element(this.gui:button('Back', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 64, w = 256, h = 16}))
+			local button = this.gui:element(this.gui:button('Back', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 64, w = 256, h = 16}))
 			button.click = function(this)
 				state.current = state.prev
 			end
@@ -365,21 +365,22 @@ local state = {
 								player:item(nil, this.slot)
 							end
 							item.click = function(this)
+								this.Gspot:stackchildren(this.id)
 								this.parent = nil
 							end
 							item.drop = function(this, bucket)
 								local invgroup = state.world.invgroup
-								if bucket == invgroup.id then
+								if bucket and (bucket == invgroup.id or this.Gspot:element(bucket).slot) then
 									this.parent = invgroup.id
 									i = 8
-									while i > 1 do
-										if this.pos.x >= invgroup.pos.x + ((i - 1) * 32) then
+									while i > 0 do
+										if love.mouse.getX() >= invgroup.pos.x + ((i - 1) * 32) then
 											this.pos.x = (i - 1) * 32
 											this.pos.y = 16
 											if i ~= this.slot then
-												local item = classes[player.slot[this.slot].item]({player.slot[this.slot].q})
+												local item = classes[player.slot[this.slot].item]({q = player.slot[this.slot].q})
 												if player.slot[i] then
-													player.slot[this.slot] = classes[player.slot[i].item]({player.slot[i].q})
+													player.slot[this.slot] = classes[player.slot[i].item]({q = player.slot[i].q})
 												else
 													player.slot[this.slot] = false
 												end
@@ -391,7 +392,6 @@ local state = {
 										end
 										i = i - 1
 									end
-									print('slot = '..i)
 								elseif not bucket then
 									player:drop(this.slot)
 									this.Gspot:rem(this.id)

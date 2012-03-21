@@ -157,8 +157,7 @@ local Gspot = {
 		l = limit or #this.elements
 		while i <= l do
 			if this.elements[i].id == id then
-				local parent = table.remove(this.elements, i)
-				table.insert(this.elements, parent)
+				table.insert(this.elements, table.remove(this.elements, i))
 				l = l - 1
 				break
 			end
@@ -369,7 +368,7 @@ local Gspot = {
 				if element.drop then
 					element:drop(this.mouseover)
 				end
-				if this.mouseover and this:element(this.mouseover).catch then
+				if this.mouseover and this:element(this.mouseover) and this:element(this.mouseover).catch then
 					this:element(this.mouseover):catch(element.id)
 				end
 			elseif button == 'r' then

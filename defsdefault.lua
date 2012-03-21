@@ -153,26 +153,7 @@ def = {
 			return classes.hit(proto, class)
 		end,
 		collide = function(this, condition)
-			local c = nil
-			if condition then
-				if this.filtercache[condition] then
-					c = this.filtercache[condition]
-				else
-					if type(condition) == 'function' then
-						c = condition
-					elseif type(condition) == 'table' then
-						c = function(obj) return obj == condition end
-					elseif type(condition) == 'string' then
-						--c = loadstring('return function(obj) return '..condition..' end')() or function() return false end
-						c = assert(loadstring('return function(obj) return '..condition..' end'), 'error : malformed filter function')()
-						this.filtercache[condition] = c
-					else
-						print('invalid filter parameter')
-						c = function() return false end
-					end
-				end
-			else c = function() return true end end
-			
+			local c = this:getfilter(condition)
 			local targets = {}
 			for i, obj in ipairs(world.objects) do
 				if c(obj) and obj ~= this and this:intersect(obj) then table.insert(targets, obj) end
@@ -398,13 +379,13 @@ def = {
 		end,
 	},
 	
-	itemhealth = {
+	itemheal = {
 		parent = 'item',
 		load = function(this, proto, class)
 			class = class or this
 			proto = proto or {}
-			proto.img = proto.img or 'itemhealth.png'
-			proto.item = proto.item or 'itemhealth'
+			proto.img = proto.img or 'itemheal.png'
+			proto.item = proto.item or 'itemheal'
 			proto.healing = proto.healing or 32
 			
 			return classes.item(proto, class)
