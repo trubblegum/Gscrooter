@@ -174,7 +174,7 @@ def = {
 			return classes.AOE(proto, class)
 		end,
 		update = function(this, dt)
-			local targets = this:collide(player)
+			local targets = this:collide('playerorfriendly')
 			if targets then
 				for i, target in ipairs(targets) do
 					if target.hp then target.hp = math.min(target.hp + (this.healing * dt), target.ohp) end

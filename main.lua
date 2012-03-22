@@ -6,7 +6,10 @@ love.load = function()
 	Gspot = require('Gspot')
 
 	img = {}
-	snd = {}
+	snd = {
+		click = love.audio.newSource('snd/click.ogg', 'static'),
+		load = love.audio.newSource('snd/load.ogg'),
+	}
 	ctrl = {
 		{key = 'a', cmd = 'left', label = 'Move Left', repeatable = true},
 		{key = 'd', cmd = 'right', label = 'Move right', repeatable = true},
@@ -32,11 +35,8 @@ love.load = function()
 	classes:load('defsdefault.lua')
 	player = classes.player()
 	state:load()
-	
-	snd.click = love.audio.newSource('snd/click.ogg', 'static')
-	snd.load = love.audio.newSource('snd/load.ogg')
-	
 	current = state[state.current]
+	
 	focus = true
 	
 	require('sandbox')

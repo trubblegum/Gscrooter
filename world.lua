@@ -15,17 +15,20 @@ local w = {
 				print('line '..linenum..' : '..line)
 				local i = line:find(' ', 1)
 				if i then
-					classes.loadparams.def = line:sub(1, i - 1)
-					classes.loadparams.proto = line:sub(i + 1)
-					if classes.loadparams.def then
-						if pcall(function() classes.loadparams.proto = TS:unpack(classes.loadparams.proto) end) then
-							if classes[classes.loadparams.def] or classes:load() then
-								if pcall(function() table.insert(world.objects, classes[classes.loadparams.def](classes.loadparams.proto)) end) then print('added object : '..classes.loadparams.def)
-								else print('failed to add object : '..classes.loadparams.def..' (missing def.load() or bad prototype)') end
-							else print('failed to load def : '..classes.loadparams.def) end
-						else print('failed to create object prototype : '..classes.loadparams.def) end
+					local loadparams = {
+						def = line:sub(1, i - 1),
+						proto = line:sub(i + 1),
+					}
+					if loadparams.def then
+						local success
+						success, loadparams.proto = pcall(function(proto) return TS:unpack(proto) end, loadparams.proto)
+						if success then
+							if classes[loadparams.def] or classes:load(nil, loadparams) then
+								if pcall(function(def, proto) table.insert(world.objects, classes[def](proto)) end, loadparams.def, loadparams.proto) then print('added object : '..loadparams.def)
+								else print('failed to add object : '..loadparams.def..' (missing def.load() or bad prototype)') end
+							else print('failed to load def : '..loadparams.def) end
+						else print('failed to create object prototype : '..loadparams.def) end
 					end
-					classes.loadparams = {}
 				end
 			end
 			if this.objects[1] then

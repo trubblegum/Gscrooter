@@ -1,60 +1,55 @@
 local def = {
 	loadparams = {},
-	load = function(this, filename)
-		if this:getdef(filename) then
+	load = function(this, filename, loadparams)
+		if this:getdef(filename, loadparams) then
 			for k, obj in pairs(this) do
 				if type(obj) == 'table' and not getmetatable(obj) then
 					if this[obj.parent] then
 						setmetatable(obj, {__index = this[obj.parent], __call = obj.load})
 						print('set dependency for object def : '..k..' - '..obj.parent)
-					elseif obj.parent then
-						setmetatable(obj, {__call = obj.load})
-						print('failed to set dependency for object def : '..k..' - '..obj.parent)
 					else
 						setmetatable(obj, {__call = obj.load})
-						print('warning : invalid or no dependency defined for object def : '..k)
+						if obj.parent then
+							print('failed to set dependency for object def : '..k..' - '..obj.parent)
+						else
+							print('warning : invalid or no dependency defined for object def : '..k)
+						end
 					end
 				end
 			end
 			return true
 		else return false end
 	end,
-	getdef = function(this, filename)
+	getdef = function(this, filename, loadparams)
 		if filename then
-			if love.filesystem.exists(filename) then
-				print('loading defs from file : '..filename)
-				this.loadparams.filename = filename
-			else print('invalid def filename : '..filename) return false end
-		else
+			if love.filesystem.exists(filename) then print('loading defs from file : '..filename)
+			else print('def file not found : '..filename) return false end
+		elseif loadparams then
 			if state.mapfile then
-				if this.loadparams.def and love.filesystem.exists(state.mapfile..'/'..this.loadparams.def..'.lua') then
-					print('found def file : '..state.mapfile..'/'..this.loadparams.def..'.lua')
-					this.loadparams.filename = state.mapfile..'/'..this.loadparams.def..'.lua'
+				if love.filesystem.exists(state.mapfile..'/'..loadparams.def..'.lua') then
+					filename = state.mapfile..'/'..loadparams.def..'.lua'
 				elseif love.filesystem.exists(state.mapfile..'/defs.lua') then
-					print('found def file : '..state.mapfile..'/defs.lua')
-					this.loadparams.filename = state.mapfile..'/defs.lua'
+					filename = state.mapfile..'/defs.lua'
 				end
 			else
-				if this.loadparams.def and love.filesystem.exists('/map/'..this.loadparams.def..'.lua') then
-					print('found def file : /map/'..this.loadparams.def..'.lua')
-					this.loadparams.filename = '/map/'..this.loadparams.def..'.lua'
+				if love.filesystem.exists('/map/'..loadparams.def..'.lua') then
+					filename = '/map/'..loadparams.def..'.lua'
 				elseif love.filesystem.exists('/map/defs.lua') then
-					print('found def file : /map/defs.lua')
-					this.loadparams.filename = 'map/defs.lua'
+					filename = 'map/defs.lua'
 				end
 			end
 		end
-		if this.loadparams.filename then
-			if pcall(function(this) this.loadparams.inc = love.filesystem.load(this.loadparams.filename)() end, this) then
-				if this.loadparams.def and not this.loadparams.inc[this.loadparams.def] then print('warning : def file does not contain def : '..this.loadparams.def..' .. continuing') end
-				for k, v in pairs(this.loadparams.inc) do
-					this.loadparams.objk = k
-					this.loadparams.objv = v
-					if pcall(function(this) this[this.loadparams.objk] = this.loadparams.objv end, this) then print('created object def : '..this.loadparams.objk)
-					else print('failed to create def : '..this.loadparams.objk) end
+		if filename then
+			print('found def file : '..filename)
+			local success, inc = pcall(function(filename) return love.filesystem.load(filename)() end, filename)
+			if success then
+				if loadparams and not inc[loadparams.def] then print('warning : def file does not contain def : '..loadparams.def..' .. continuing') end
+				for k, v in pairs(inc) do
+					if pcall(function(this, k, v) this[k] = v end, this, k, v) then print('created def : '..k)
+					else print('failed to create def : '..k) end
 				end
 				return true
-			else print('failed to load def file : '..this.loadparams.filename) end
+			else print('failed to load def file : '..filename) end
 		else print('failed to find def file') end
 		return false
 	end,
@@ -102,11 +97,15 @@ local def = {
 			['true'] = function() return true end,
 			['false'] = function() return false end,
 			platform = function(obj) return obj.type == 'platform' end,
-			enemy = function(obj) return obj.type == 'enemy' end,
+			player = function(obj) return obj == player end,
 			friendly = function(obj) return obj.type == 'friendly' end,
+			playerorfriendly = function(obj) return obj.type == 'friendly' or obj == player end,
+			enemy = function(obj) return obj.type == 'enemy' end,
 			usable = function(obj) return obj.type == 'portal' or obj.type == 'chest' end,
 			item = function(obj) return obj.type == 'item' end,
+			notplatform = function(obj) return obj.type ~= 'platform' end,
 			notportal = function(obj) return obj.type ~= 'portal' end,
+			entity = function(obj) if obj.hp then return true else return false end end,
 		},
 		getfilter = function(this, condition)
 			if condition then
@@ -117,12 +116,12 @@ local def = {
 						return condition
 					elseif type(condition) == 'table' then
 						return function(obj) return obj == condition end
-					elseif type(condition) == 'string' then
+					--elseif type(condition) == 'string' then
 						--c = loadstring('return function(obj) return '..condition..' end')() or function() return false end
-						this.filters[condition] = assert(loadstring('return function(obj) return '..condition..' end'), 'error : malformed collision filter condition')()
-						return this.filters[condition]
+					--	this.filters[condition] = assert(loadstring('return function(obj) return '..condition..' end'), 'error : malformed collision filter condition')()
+					--	return this.filters[condition]
 					else
-						print('invalid filter parameter')
+						print('invalid filter parameter : '..condition)
 						return function() return false end
 					end
 				end
