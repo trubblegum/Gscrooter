@@ -29,9 +29,9 @@ The first line in a .lvl is the floor, which defines the level's bounds (entity 
 
 Objects are divided into object and effect level tables.
 Collision methods only check against the object table.
-See map/snortal.lua for collision example and notes.
+See map/snortal.lua for examples and notes.
 
-Object prototype can override any of an individual objects' attributes or functions, including update(this, dt) and draw(this) functions. It is generally wise to call a lower order's update and draw at the end of an override function.
+Object prototype can override any of an individual object's attributes or functions, including update(this, dt) and draw(this) functions. It is generally wise to call a lower order's update and draw at the end of an override function.
 Note that only object level objects are placed in a level file. Effects are generated on the fly and added using world:addeffect(classes.<objectname>(proto))
 Object instances can also be created at runtime using world:addobject(classes.<objectname>(proto))
 
@@ -41,7 +41,7 @@ in classesdefault.lua :
 - scenery {p = {x, y}, bg = 'treetop1.png'} -- behaves like a platform, but renders bg behind, centered and aligned to bottom
 - healtree {p = {x, y}, healing  = (HPS)} -- it spawns an AOE heal effect
 - chest {p = {}, contents = {'(itemclass)', '(itemclass)', ...}}
-- itemhealth
+- itemheal
 - itemgrenade
 
 in map/Gplace/defs.lua :

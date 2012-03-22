@@ -9,21 +9,24 @@ local def = {
 			-- note : 'snortal' is not an established group, but 'platform', 'player', 'friendly', 'item', and 'enemy' are
 			
 			proto.img = proto.img or 'portal.png' -- set the object's image, allowing override by supplied prototype
+			proto.duration = 0 -- age and life are reserved
 			
-			proto.duration = 0
+			classes.object.filters.snortal = function(obj) return obj.type == 'snortal' end -- define a filter group. now snortal is a recognizable filter group
+			-- Note : overriding existing filters may destabilize existing object behaviours
 			
 			return classes.object(proto, class) -- return a world-ready instance, created by the dependency chain (classes is the global class structure, where object classes live)
-			-- note : all constructors must trickle down to object
+			-- Note : all constructors must trickle down to object
 		end,
 		update = function(this, dt) -- update was called from the instance, so now this is our instance
 			
-			this:collide('durrr') -- this will cause condition() to return nil, resulting in no collisions
-			this:collide('true') -- this will cause condition() to return true, resulting in collision with first object returned by intersect()
+			--this:collide('durrr') -- this is invalid, and will cause collide.condition() to fall back on return false, resulting in no collisions
+			-- this:collide(false) -- as above
+			this:collide('true') -- select a predefined condition which always returns true, resulting in collision with first object returned by intersect()
 			this:collide() -- as above
-			this:collide('obj.type == "platform"') -- this will cause condition() to return true if obj is a platform, resulting in collision with the first platform encountered
-			this:collide('platform') -- as above, but more efficient, using a predefined condition
+			--this:collide(true) -- invalid, and will crash love
+			-- this:collide('obj.type == "platform"') -- no longer valid
+			this:collide('platform') -- select a predefined condition, this time filtering in only platforms
 			this:collide(function(obj) return obj.type == 'platform' end) -- as above, but more flexible
-			--this:collide(true) -- invalid
 			-- Note that AOE.collide returns a table of all objects which intersect
 			
 			-- usage :
@@ -32,7 +35,7 @@ local def = {
 				this.duration = this.duration + dt
 				print("you've been in my personal space for "..this.duration)
 			end
-			-- note : snortal is a horrible object, which just eats update cycles. try to keep calls to collide() down
+			-- Note : snortal is a horrible object, which just eats update cycles. try to keep calls to collide() down
 			
 			classes.object.update(this, dt) -- calling update() from a lower level, so we don't have to redefine basic object behaviours
 		end,
