@@ -1,5 +1,5 @@
 io = {stdin = io.stdin, stdout = io.stdout, stderr = io.stderr}
-os = {time = os.time}
+os = {time = os.time, clock = os.clock}
 dofile = nil
 loadfile = nil
 debug = nil

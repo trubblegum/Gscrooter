@@ -1,4 +1,3 @@
--- Copyright (c) 2012 Vince Fryer
 -- This software is provided 'as-is', without any express or implied warranty. In no event will the authors be held liable for any damages arising from the use of this software.
 -- Permission is granted to anyone to use this software for any purpose, including commercial applications, and to alter it and redistribute it freely, subject to the following restrictions:
 -- 1. The origin of this software must not be misrepresented; you must not claim that you wrote the original software. If you use this software in a product, an acknowledgment in the product documentation would be appreciated but is not required.
@@ -6,7 +5,7 @@
 -- 3. This notice may not be removed or altered from any source distribution.
 
 local Gspot = {
-	new = function(this)
+	load = function(this)
 		local gui = {
 			std = 16, -- set a standard gui unit
 			color = { -- define colors
@@ -30,7 +29,7 @@ local Gspot = {
 			ocolor = {},
 			orepeat = {},
 		}
-		return setmetatable(gui, {__index = this, __call = this.new})
+		return setmetatable(gui, {__index = this, __call = this.load})
 	end,
 	
 	-- helpers
@@ -665,6 +664,7 @@ local Gspot = {
 			this.Gspot:unfocus()
 		end
 		element.keypress = function(this, key, code)
+		-- fragments attributed to vrld's Quickie : https://github.com/vrld/Quickie
 			-- delete
 			if key == 'backspace' then
 				this.value = this.value:sub(1, this.cursor - 1)..this.value:sub(this.cursor + 1)
@@ -683,9 +683,7 @@ local Gspot = {
 				this.cursor = this.value:len()
 			-- input
 			elseif code >= 32 and code < 127 then
-				local left = this.value:sub(1, this.cursor)
-				local right =  this.value:sub(this.cursor + 1)
-				this.value = table.concat{left, string.char(code), right}
+				this.value = this.value:sub(1, this.cursor)..string.char(code)..this.value:sub(this.cursor + 1)
 				this.cursor = this.cursor + 1
 			end
 		end
@@ -741,4 +739,4 @@ local Gspot = {
 		return this:add(element)
 	end,
 }
-return Gspot:new()
+return Gspot:load()

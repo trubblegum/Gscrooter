@@ -4,6 +4,7 @@ local def = {
 		load = function(this, proto, class) -- this is passed by lua, optional prototype, optional class if being called by a higher-level constructor
 			class = class or this -- the class which this object will inherit from, or object() won't know where to assign dependency.
 			proto = proto or {} -- start with supplied prototype, or create a new table
+			proto.p = classes.position(proto.p, {w = 96, h = 96}) -- construct position(proto, defaults)
 			
 			proto.type = 'snortal' -- filter group
 			-- note : 'snortal' is not an established group, but 'platform', 'player', 'friendly', 'item', and 'enemy' are

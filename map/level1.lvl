@@ -1,11 +1,13 @@
-platform {p = {x = 0, y = 0, w = 2048, h = 0}, img = 'platform4.png'}
+platform {p = {x = 0, y = 0, w = 2048}, img = 'platform4.png'}
 
 snortal {p = {x = 256, y = -256}}
 
-chest {p = {x = 256, y = -256}, contents = {'itemheal', 'itemheal', 'itemgrenade', 'itemgrenade'}}
+chest {p = {x = 256, y = -256}, contents = {'itemheal', 'itemheal', 'itemheal', 'itemheal', 'itemgrenade', 'itemgrenade', 'itemgrenade', 'itemgrenade', 'itemgrenade', 'itemgrenade'}}
 
 portal {p = {x = 1536, y = -128}}
 
 healtree {p = {x = 64, y = -128}}
 
 scenery {p = {x = 1280, y = -128}}
+
+platform {p = {x = 513, y = -128, w = 256, h = 32}, img = 'platform4.png'}

@@ -4,6 +4,7 @@ def = {
 		load = function(this, proto, class)
 			class = class or this
 			proto = proto or {}
+			proto.p = classes.position(proto.p, {w = 64, h = 32})
 			proto.type = 'platform'
 			proto.img = proto.img or 'platform4.png'
 			
@@ -16,6 +17,7 @@ def = {
 		load = function(this, proto, class)
 			class = class or this
 			proto = proto or {}
+			proto.p = classes.position(proto.p, {w = 128, h = 128})
 			proto.img = proto.img or 'tree1.png'
 			proto.bg = proto.bg or 'treetop1.png'
 			if type(proto.bg) == 'string' and not img[proto.bg] then
@@ -30,7 +32,7 @@ def = {
 			if this.bg then
 				local y = img[this.bg]:getHeight() - this.p.h
 				local x = (this.p.w - img[this.bg]:getWidth()) / 2
-				if this.s < 0 then love.graphics.draw(img[this.bg], this.p.x + this.p.w - x, this.p.y - y, 0, -1, 1)
+				if this.sprite.dir < 0 then love.graphics.draw(img[this.bg], this.p.x + this.p.w - x, this.p.y - y, 0, -1, 1)
 				else love.graphics.draw(img[this.bg], this.p.x + x, this.p.y - y) end
 			end
 			classes.object.draw(this)
@@ -62,7 +64,8 @@ def = {
 			local color = {}
 			color.r, color.g, color.b, color.a = love.graphics.getColor()
 			love.graphics.setColor(255, 255, 255, math.floor(this.alpha))
-			love.graphics.draw(img[this.img], this.p.x, this.p.y)
+			love.graphics.drawq(img[this.img], this.quad, this.p.x, this.p.y, 0, 1, 1, 0, 0)
+			--love.graphics.draw(img[this.img], this.p.x, this.p.y)
 			love.graphics.setColor(color.r, color.g, color.b, color.a)
 		end,
 	},
@@ -72,6 +75,7 @@ def = {
 		load = function(this, proto, class)
 			class = class or this
 			proto = proto or {}
+			proto.p = classes.position(proto.p, {w = 8, h = 8})
 			proto.type = 'proj'
 			proto.img = proto.img or 'bullet.png'
 			proto.v = proto.v or {x = 0, y = 0}
@@ -107,6 +111,7 @@ def = {
 		load = function(this, proto, class)
 			class = class or this
 			proto = proto or {}
+			proto.p = classes.position(proto.p, {w = 64, h = 64})
 			proto.img = proto.img or 'hit.png'
 			proto.v = proto.v or {x = 0, y = -128}
 			proto.scale = proto.scale or 0.1
@@ -285,6 +290,7 @@ def = {
 			proto = proto or {}
 			proto.v = proto.v or {x = 0, y = 0}
 			proto.mass = proto.mass or 1
+			proto.bounce = proto.bounce or 0.5
 			
 			return classes.object(proto, class)
 		end,
@@ -304,7 +310,7 @@ def = {
 					-- landing
 					if (this.p.y + this.p.h) - (this.v.y * dt) <= this.carrier.p.y then
 						this.p.y = this.carrier.p.y - this.p.h
-						this.v.y = 0
+						this.v.y = 0 - math.floor(this.v.y * this.bounce)
 						--this.offset = {x = this.p.x - this.carrier.p.x, y = this.p.y - this.carrier.p.y}
 						--this.p.x = this.carrier.p.x + this.offset.x
 						--this.p.y = this.carrier.p.y + this.offset.y
@@ -329,6 +335,7 @@ def = {
 		load = function(this, proto, class)
 			class = class or this
 			proto = proto or {}
+			proto.p = classes.position(proto.p, {w = 64, h = 64})
 			proto.type = 'chest'
 			proto.img = proto.img or 'chest.png'
 			proto.contents = proto.contents or {}
@@ -351,9 +358,12 @@ def = {
 		load = function(this, proto, class)
 			class = class or this
 			proto = proto or {}
+			proto.p = classes.position(proto.p, {w = 32, h = 32})
 			proto.type = 'item'
 			proto.img = proto.img or 'object.png'
+			proto.p = proto.p or {}
 			proto.item = proto.item or 'item'
+			proto.mass = proto.mass or 0.5
 			proto.q = proto.q or 1
 			proto.age = 0
 			proto.life = 10
@@ -441,6 +451,7 @@ def = {
 		load = function(this, proto, class)
 			class = class or this
 			proto = proto or {}
+			proto.p = classes.position(proto.p, {w = 96, h = 96})
 			proto.type = 'portal'
 			proto.img = proto.img or 'portal.png'
 			
@@ -469,7 +480,7 @@ def = {
 		load = function(this, proto, class)
 			class = class or this
 			proto = proto or {}
-			proto.p = proto.p or {x = 128, y = -128, w = 0, h = 0}
+			proto.p = classes.position(proto.p, {x = 128, y = -128, w = 64, h = 64})
 			proto.hp = proto.hp or 128
 			proto.ohp = proto.ohp or proto.hp
 			proto.speed = proto.speed or 256
@@ -512,6 +523,7 @@ def = {
 		load = function(this, proto, class)
 			class = class or this
 			proto = proto or {}
+			proto.p = classes.position(proto.p, {w = 64, h = 128})
 			proto.type = 'friendly'
 			proto.img = proto.img or 'healtree.png'
 			proto.healing = proto.healing or 16

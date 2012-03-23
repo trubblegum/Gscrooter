@@ -5,6 +5,7 @@ local def = {
 		load = function(this, proto, class)
 			class = class or this
 			proto = proto or {}
+			proto.p = classes.position(proto.p, {w = 64, h = 64})
 			proto.img = proto.img or 'hopper.png'
 			proto.damage = proto.damage or 32
 			proto.updateinterval = proto.updateinterval or 1
@@ -35,6 +36,7 @@ local def = {
 		load = function(this, proto, class)
 			class = class or this
 			proto = proto or {}
+			proto.p = classes.position(proto.p, {w = 128, h = 64})
 			proto.img = proto.img or 'hopperspawn.png'
 			proto.hp = proto.hp or 512
 			proto.damage = proto.damage or 16
@@ -70,6 +72,7 @@ local def = {
 		load = function(this, proto, class)
 			class = class or this
 			proto = proto or {}
+			proto.p = classes.position(proto.p, {w = 96, h = 64})
 			proto.img = proto.img or 'bommer.png'
 			proto.mass = proto.mass or 0.5
 			proto.hp = proto.hp or 32
@@ -111,8 +114,10 @@ local def = {
 		load = function(this, proto, class)
 			class = class or this
 			proto = proto or {}
+			proto.p = classes.position(proto.p, {w = 96, h = 128})
 			proto.img = proto.img or 'bommerspawn.png'
 			proto.mass = proto.mass or 0.4
+			proto.bounce = proto.bounce or 1
 			proto.hp = proto.hp or 256
 			proto.updateinterval = proto.updateinterval or 2
 			
@@ -144,6 +149,7 @@ local def = {
 		load = function(this, proto, class)
 			class = class or this
 			proto = proto or {}
+			proto.p = classes.position(proto.p, {w = 64, h = 32})
 			proto.img = proto.img or 'buzzer.png'
 			proto.speed = proto.speed or 512
 			proto.mass = proto.mass or 0.5
@@ -186,6 +192,7 @@ local def = {
 		load = function(this, proto, class)
 			class = class or this
 			proto = proto or {}
+			proto.p = classes.position(proto.p, {w = 128, h = 64})
 			proto.img = proto.img or 'buzzerspawn.png'
 			proto.speed = proto.speed or 256
 			proto.hp = proto.hp or 256
@@ -227,6 +234,7 @@ local def = {
 		load = function(this, proto, class)
 			class = class or this
 			proto = proto or {}
+			proto.p = classes.position(proto.p, {w = 64, h = 32})
 			proto.img = proto.img or 'slither.png'
 			proto.damage = proto.damage or 32
 			proto.updateinterval = proto.updateinterval or 1
@@ -260,6 +268,7 @@ local def = {
 		load = function(this, proto, class)
 			class = class or this
 			proto = proto or {}
+			proto.p = classes.position(proto.p, {w = 128, h = 64})
 			proto.img = proto.img or 'slitherspawn.png'
 			proto.hp = proto.hp or 512
 			proto.damage = proto.damage or 16

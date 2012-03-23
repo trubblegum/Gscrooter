@@ -26,17 +26,11 @@ local def = {
 			else print('def file not found : '..filename) return false end
 		elseif loadparams then
 			if state.mapfile then
-				if love.filesystem.exists(state.mapfile..'/'..loadparams.def..'.lua') then
-					filename = state.mapfile..'/'..loadparams.def..'.lua'
-				elseif love.filesystem.exists(state.mapfile..'/defs.lua') then
-					filename = state.mapfile..'/defs.lua'
-				end
+				if love.filesystem.exists(state.mapfile..'/'..loadparams.def..'.lua') then filename = state.mapfile..'/'..loadparams.def..'.lua'
+				elseif love.filesystem.exists(state.mapfile..'/defs.lua') then filename = state.mapfile..'/defs.lua' end
 			else
-				if love.filesystem.exists('/map/'..loadparams.def..'.lua') then
-					filename = '/map/'..loadparams.def..'.lua'
-				elseif love.filesystem.exists('/map/defs.lua') then
-					filename = 'map/defs.lua'
-				end
+				if love.filesystem.exists('/map/'..loadparams.def..'.lua') then filename = '/map/'..loadparams.def..'.lua'
+				elseif love.filesystem.exists('/map/defs.lua') then filename = 'map/defs.lua' end
 			end
 		end
 		if filename then
@@ -53,44 +47,89 @@ local def = {
 		else print('failed to find def file') end
 		return false
 	end,
-
+	
+	position = {
+		load = function(this, p, defaults)
+			p = p or {}
+			defaults = defaults or {}
+			p.x = p.x or defaults.x or 256
+			p.y = p.y or defaults.y or -256
+			p.w = p.w or defaults.w or 32
+			p.h = p.h or defaults.h or 32
+			return setmetatable(p, {__index = this})
+		end,
+	},
+	
+	animation = {
+		load = function(this, proto)
+			proto = proto or {}
+			for i, v in pairs(proto) do
+				if type(v) == 'table' then
+					v.framerate = v.framerate or 1
+					v.y = v.y or 1
+					proto[i] = v
+				end
+			end
+			proto.idle = proto.idle or {framerate = 1, y = 1}
+			return setmetatable(proto, {__index = this})
+		end,
+		play = function(this, current)
+			this.current = current
+			this.dt = 0
+			this.frame = 1
+		end,
+	},
 	-- OBJECT
 	object = {
 		load = function(this, proto, class)
 			class = class or this
-			local obj = {img = nil, p = {x = 0, y = 0}, s = 1}
+			local obj = {}
 			if type(proto) == 'table' then for k, v in pairs(proto) do obj[k] = v end end
-			if type(obj.img) == 'string' then
+			obj.p = classes.position(obj.p)
+			obj.img = obj.img or nil
+			obj.sprite = obj.sprite or {}
+			obj.sprite.dt = obj.sprite.dt or 0
+			obj.sprite.dir = obj.sprite.dir or 1
+			obj.sprite.frame = obj.sprite.frame or 1
+			obj.sprite.current = obj.sprite.current or 'idle'
+			obj.sprite.anim = classes.animation(obj.sprite.anim)
+			
+			if obj.img then
 				if not img[obj.img] then
 					if love.filesystem.exists('img/'..obj.img) then img[obj.img] = love.graphics.newImage('img/'..obj.img)
-					elseif state.mapfile and love.filesystem.exists(state.mapfile..'/img/'..obj.img) then img[obj.img] = love.graphics.newImage(state.mapfile..'img/'..obj.img)
-					elseif love.filesystem.exists('/map/img/'..obj.img) then img[obj.img] = love.graphics.newImage('/map/img/'..obj.img)
+					elseif state.mapfile and love.filesystem.exists(state.mapfile..'/img/'..obj.img) then img[obj.img] = love.graphics.newImage(state.mapfile..'/img/'..obj.img)
+					elseif love.filesystem.exists('/map/'..obj.img) then img[obj.img] = love.graphics.newImage('/map/'..obj.img)
 					else obj.img = nil end
 				end
-				if obj.img and ((not obj.p.w) or obj.p.w < img[obj.img]:getWidth()) then
-					obj.p.w = img[obj.img]:getWidth()
-					obj.p.h = img[obj.img]:getHeight()
+				if obj.img then
+					img[obj.img]:setWrap("repeat", "repeat")
+					obj.quad = love.graphics.newQuad(0, 0, obj.p.w, obj.p.h, img[obj.img]:getWidth(), img[obj.img]:getHeight())
 				end
 			end
-			obj.p.w = obj.p.w or 0
-			obj.p.h = obj.p.h or 0
 			
 			return setmetatable(obj, {__index = class})
 		end,
 		update = function(this, dt)
-			-- object does nothing on its own, update is only here to catch errant calls
+			this.sprite.dt = this.sprite.dt + dt
+			anim = this.sprite.anim[this.sprite.current]
+			if (type(anim.framerate) == 'number' and this.sprite.dt > anim.framerate) or (type(anim.framerate) == 'function' and anim.framerate(dt)) then
+				this.sprite.dt = 0
+				this.sprite.frame = this.sprite.frame + 1
+				if this.sprite.frame * this.p.w > img[this.img]:getWidth() then this.sprite.frame = 1 end
+				this.quad:setViewport((this.sprite.frame - 1) * this.p.w, (anim.y - 1) * this.p.h, this.p.w, this.p.h)
+			end
 		end,
 		draw = function(this)
 			if img[this.img] then
-				local x = 0
-				while x < this.p.w do
-					if this.v and this.v.x ~= 0 then
-						if this.v.x > 0 then this.s = -1 else this.s = 1 end
-					end
-					if this.s < 0 then love.graphics.draw(img[this.img], this.p.x + this.p.w + x, this.p.y, 0, -1, 1)
-					else love.graphics.draw(img[this.img], this.p.x + x, this.p.y) end
-					x = x + img[this.img]:getWidth()
+				if this.v and this.v.x ~= 0 then
+					if this.v.x > 0 then this.sprite.dir = -1 else this.sprite.dir = 1 end
 				end
+				local x = 0
+				--while x < this.p.w do
+					if this.sprite.dir < 0 then love.graphics.drawq(img[this.img], this.quad, this.p.x + this.p.w + x, this.p.y, 0, this.sprite.dir, 1, 0, 0)
+					else love.graphics.drawq(img[this.img], this.quad, this.p.x + x, this.p.y, 0, 1, 1, 0, 0) end
+					x = x + img[this.img]:getWidth()
+				--end
 			else love.graphics.quad('fill', this.p.x, this.p.y, this.p.x + this.p.w, this.p.y, this.p.x + this.p.w, this.p.y + this.p.h, this.p.x, this.p.y + this.p.h) end
 		end,
 		filters = {
@@ -147,11 +186,19 @@ local def = {
 		load = function(this, proto, class)
 			class = class or this
 			proto = proto or {}
-			proto.p = {x = 128, y = -256, w = 0, h = 0}
+			proto.p = classes.position(proto.p, {x = 128, y = -256, w = 64, h = 64})
+			proto.img = 'player.png'
+			proto.bounce = 0
+			proto.sprite = {
+				anim = {
+					idle = {
+						framerate = function(dt) return math.random() * 2 < dt end
+					}
+				}
+			}
 			proto.ohp = 128
 			proto.hp = proto.hp or proto.ohp
 			proto.type = 'player'
-			proto.img = 'player.png'
 			proto.slot = proto.slot or {
 				[1] = false,
 				[2] = false,
@@ -193,7 +240,7 @@ local def = {
 		pickup = function(this, item)
 			for i, slot in ipairs(this.slot) do
 				if slot and slot.item == item.item then
-					slot.q = slot.q + 1
+					slot.q = slot.q + item.q
 					world:remobject(item)
 					state.world.invgroup:load()
 					return

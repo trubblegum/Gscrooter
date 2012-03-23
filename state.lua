@@ -9,7 +9,8 @@ local state = {
 			if type(state) == 'table' and state.load then state:load() end
 		end
 	end,
-	feedback = function(dest, label, pos)
+	feedback = function(label, dest, pos)
+		dest = dest or state.current
 		pos = pos or {x = 256, y = 256}
 		pos.w = pos.w or 256
 		pos.h = pos.h or 16
@@ -151,14 +152,14 @@ local state = {
 						end
 						if state.world.saveinput then state.world.saveinput.value = this.value end
 						print('loaded player')
-						state.feedback(state.current, 'Loaded '..state.loadplayer.loadinput.value)
+						state.feedback('Loaded '..state.loadplayer.loadinput.value)
 					else
 						print('failed to load player .. reverting to default')
-						state.feedback(state.current, 'Failed to Load '..state.loadplayer.loadinput.value)
+						state.feedback('Failed to Load '..state.loadplayer.loadinput.value)
 					end
 				else
 					print('player file not found : '..this.value..'.sav')
-					state.feedback(state.current, 'No Such Player saved', {x = state.loadplayer.loadinput.pos.x, y = state.loadplayer.loadinput.pos.y + 32})
+					state.feedback('No Such Player saved', nil, {x = state.loadplayer.loadinput.pos.x, y = state.loadplayer.loadinput.pos.y + 32})
 				end
 			end
 			-- load
@@ -318,10 +319,10 @@ local state = {
 					if pcall(function() love.filesystem.write(this.value..'.sav', str) end) then
 						if state.loadplayer.loadinput then state.world.saveinput.value = state.loadplayer.loadinput.value end
 						print('wrote player file : '..this.value..'.sav')
-						state.feedback(state.current, 'Saved '..this.value, {x = love.graphics.getWidth() - 416, y = 48})
+						state.feedback('Saved '..this.value, nil, {x = love.graphics.getWidth() - 416, y = 48})
 					else
 						print('failed to write player file : '..this.value..'.sav')
-						state.feedback(state.current, 'Unable to save '..this.value, {x = love.graphics.getWidth() - 416, y = 48})
+						state.feedback('Unable to save '..this.value, nil, {x = love.graphics.getWidth() - 416, y = 48})
 					end
 					this.Gspot:unfocus()
 					this.display = false

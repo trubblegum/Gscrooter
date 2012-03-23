@@ -52,7 +52,7 @@ local w = {
 	end,
 	loadbackdrop = function(this, levelfile)
 		if love.filesystem.exists(levelfile..'.png') then this.backdrop = love.graphics.newImage(levelfile..'.png')
-		elseif state.mapfile and love.filesystem.exists(state.mapfile..'/backdrop.png') then this.backdrop = love.graphics.newImage(mapfile..'/backdrop.png')
+		elseif state.mapfile and love.filesystem.exists(state.mapfile..'/backdrop.png') then this.backdrop = love.graphics.newImage(state.mapfile..'/backdrop.png')
 		else this.backdrop = love.graphics.newImage('/map/backdrop.png') end
 		this.backdrop:setWrap("repeat", "repeat")
 		this.quad = love.graphics.newQuad(0, 0, love.graphics.getWidth(), love.graphics.getHeight(), this.backdrop:getWidth(), this.backdrop:getHeight())

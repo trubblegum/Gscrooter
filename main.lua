@@ -49,8 +49,18 @@ love.update = function(dt)
 	--end
 end
 
+fps = {
+	prev = 0,
+	draw = function(this)
+		local now = os.clock()
+		love.graphics.print('FPS : '..tostring(math.floor(0.1 / (now - this.prev)), 2), 0, 0)
+		this.prev = now
+	end,
+}
+
 love.draw = function()
 	current:draw()
+	--fps:draw()
 end
 
 love.focus = function(f)

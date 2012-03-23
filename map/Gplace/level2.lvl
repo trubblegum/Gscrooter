@@ -1,10 +1,10 @@
-platform {p = {x = 0, y = 0, w = 1536, h = 0}, img = 'platform4.png'}
+platform {p = {x = 0, y = 0, w = 1536}, img = 'platform4.png'}
 platform {p = {x = 128, y = -256}, img = 'platform1.png'}
-platform {p = {x = 256, y = -128}, img = 'platform2.png'}
-platform {p = {x = 384, y = -256}, img = 'platform4.png'}
-platform {p = {x = 512, y = -512}, img = 'platform2.png'}
-platform {p = {x = 768, y = -368}, img = 'platform2.png'}
-platform {p = {x = 768, y = -576}, img = 'platform2.png'}
+platform {p = {x = 256, y = -128, w = 128}, img = 'platform2.png'}
+platform {p = {x = 384, y = -256, w = 256}, img = 'platform4.png'}
+platform {p = {x = 512, y = -512, w = 128}, img = 'platform2.png'}
+platform {p = {x = 768, y = -368, w = 128}, img = 'platform2.png'}
+platform {p = {x = 768, y = -576, w = 128}, img = 'platform2.png'}
 
 portal {p = {x = 512, y = -384}, level = 'Gplace/level1'}
 
