@@ -10,21 +10,8 @@ local state = {
 		end
 	end,
 	feedback = function(label, dest, pos)
-		dest = dest or state.current
-		pos = pos or {x = 256, y = 256}
-		pos.w = pos.w or 256
-		pos.h = pos.h or 16
-		local gui = state[dest].gui
-		if gui then
-			feedback = gui:text(label, pos)
-			feedback.alpha = 255
-			feedback.update = function(this, dt)
-				this.alpha = this.alpha - (128 * dt)
-				if this.alpha < 0 then this.Gspot:rem(this.id) return end
-				local color = this.Gspot.color.fg
-				this.color = {color[1], color[2], color[3], this.alpha}
-			end
-		end
+		local gui = (dest and state[dest].gui) or state[state.current].gui
+		feedback = gui:feedback(label, pos, nil, (pos and false) or true)
 	end,
 	menu = {
 		load = function(this)
@@ -136,22 +123,21 @@ local state = {
 						end
 					end
 					if success then
+						for i, slot in pairs(player.slot) do
+							if slot then
+								if classes[slot.item] or classes:load(nil, {def = slot.item}) then
+									slot = classes[slot.item](slot)
+									print('loaded inventory slot ' .. i)
+								else print('failed to load inventory item object def') end
+							end
+						end
 						if state.mapfile then
 							state.map:load()
 							state.current = 'map'
 						else
 							state.current = 'loadmap'
 						end
-						for i, slot in pairs(player.slot) do
-							if slot then
-								classes.loadparams.def = slot.item
-								if classes[slot.item] or classes:load() then
-									slot = classes[slot.item](slot)
-								else print('failed to load inventory item object def') end
-							end
-						end
 						if state.world.saveinput then state.world.saveinput.value = this.value end
-						print('loaded player')
 						state.feedback('Loaded '..state.loadplayer.loadinput.value)
 					else
 						print('failed to load player .. reverting to default')
@@ -162,6 +148,7 @@ local state = {
 					state.feedback('No Such Player saved', nil, {x = state.loadplayer.loadinput.pos.x, y = state.loadplayer.loadinput.pos.y + 32})
 				end
 			end
+			
 			-- load
 			this.loadbutton = this.gui:button('Load', {x = 272, y = 0, w = 128, h = 16}, this.loadinput)
 			this.loadbutton.click = function(this)
@@ -311,7 +298,10 @@ local state = {
 				this.saveinput = this.gui:input('', {x = -272, y = 48, w = 256, h = 16}, this.menugroup)
 				if state.loadplayer.loadinput then this.saveinput.value = state.loadplayer.loadinput.value end
 				this.saveinput.done = function(this)
-					local p = {hp = player.hp, slot = player.slot}
+					local p = {hp = player.hp, slot = {}}
+					for i, slot in ipairs(player.slot) do
+						p.slot[i] = (slot and {item = slot.item, q = slot.q}) or false
+					end
 					local str = TS:pack(p)
 					str = str..'\n'
 					if state.mapfile then str = str..state.mapfile end
@@ -330,11 +320,10 @@ local state = {
 				-- save button
 				button = this.gui:button('Save', {x = 0, y = 48, w = 128, h = 16}, this.menugroup)
 				button.click = function(this)
-					if state.world.saveinput.display then
-						state.world.saveinput:done()
+					if state.world.saveinput.display then state.world.saveinput:done()
 					else
 						state.world.saveinput.display = true
-						this.Gspot:setfocus(state.world.saveinput.id)
+						this.Gspot:setfocus(state.world.saveinput)
 					end
 				end
 				-- prefs
@@ -351,11 +340,7 @@ local state = {
 				this.invgroup = this.gui:group('Inventory', {x = 16, y = 16, w = 256, h = 48})
 				this.invgroup.drag = true
 				this.invgroup.load = function(this)
-				--	for i, element in ipairs(this.Gspot.elements) do
-				--		if element.slot then this.Gspot:rem(element) end
-				--	end
 					this.Gspot:add(this.Gspot:rem(this))
-					--for i, child in ipairs(this.children) do this.Gspot:rem(child) end
 					for i, item in ipairs(player.slot) do
 						if item then this:item(item, i) end
 					end
