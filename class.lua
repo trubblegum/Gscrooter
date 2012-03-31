@@ -62,15 +62,16 @@ local def = {
 	
 	animation = {
 		load = function(this, proto)
+			local framerate = 0.5
 			proto = proto or {}
 			for i, v in pairs(proto) do
 				if type(v) == 'table' then
-					v.framerate = v.framerate or 1
+					v.framerate = v.framerate or framerate
 					v.y = v.y or 1
 					proto[i] = v
 				end
 			end
-			proto.idle = proto.idle or {framerate = 1, y = 1}
+			proto.idle = proto.idle or {framerate = framerate, y = 1}
 			return setmetatable(proto, {__index = this})
 		end,
 		play = function(this, current)
@@ -219,45 +220,50 @@ local def = {
 			classes.entity.update(this, dt)
 		end,
 		fire = function(this, orig, dir)
-			table.insert(world.effects, classes.proj({p = orig, v = dir, orig = this}))
+			table.insert(world.effects, classes.bullet({p = orig, v = dir, orig = this}))
 		end,
 		use = function(this, key, slot)
-			item = this:collide('item')
-			if item then this:pickup(item) else
+			local item = this:collide('item')
+			if item then this:pickup(item)
+			else
 				item = this:collide('usable')
-				if item then item:use(this) end
+				if item then item:use(this, slot) end
 			end
 		end,
 		item = function(this, key, slot)
 			if this.slot[slot] then
-				this.slot[slot]:use(player)
-				if this.slot[slot].q < 1 then
-					this.slot[slot] = false
-					state.world.invgroup:load()
-				end
+				this.slot[slot]:use(this)
+				if this.slot[slot].q < 1 then this.slot[slot] = false end
+				state.world.invgroup:load()
 			end
 		end,
 		pickup = function(this, item)
+			local done = false
 			for i, slot in ipairs(this.slot) do
 				if slot and slot.item == item.item then
 					slot.q = slot.q + item.q
-					world:remobject(item)
-					state.world.invgroup:load()
-					return
+					done = true
+					break
 				end
 			end
-			for i, slot in ipairs(this.slot) do
-				if not slot then
-					this.slot[i] = classes[item.item]({q = item.q})
-					world:remobject(item)
-					state.world.invgroup:load()
-					return
+			if not done then
+				for i, slot in ipairs(this.slot) do
+					if not slot then
+						this.slot[i] = classes[item.item]({q = item.q})
+						done = true
+						break
+					end
 				end
+			end
+			if done then
+				world:remobject(item)
+				state.world.invgroup:load()
 			end
 		end,
 		drop = function(this, slot)
 			table.insert(world.objects, classes[this.slot[slot].item]({q = this.slot[slot].q, p = {x = this.p.x + (this.p.w / 2), y = this.p.y}, v = {x = 256 - (math.random() * 512), y = -256}}))
 			this.slot[slot] = false
+			state.world.invgroup:load()
 		end,
 
 	},

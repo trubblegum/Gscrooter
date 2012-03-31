@@ -16,7 +16,7 @@ local state = {
 		pos.h = pos.h or 16
 		local gui = state[dest].gui
 		if gui then
-			feedback = gui:element(gui:text(label, pos))
+			feedback = gui:text(label, pos)
 			feedback.alpha = 255
 			feedback.update = function(this, dt)
 				this.alpha = this.alpha - (128 * dt)
@@ -30,23 +30,23 @@ local state = {
 		load = function(this)
 			this.gui = Gspot()
 			-- maps
-			local button = this.gui:element(this.gui:button('Load Map', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 160, w = 256, h = 16}))
+			local button = this.gui:button('Load Map', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 160, w = 256, h = 16})
 			button.click = function(this)
 				state.current = 'loadmap'
 			end
 			-- load
-			this.loadbutton = this.gui:element(this.gui:button('Load Player', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 128, w = 256, h = 16}))
+			this.loadbutton = this.gui:button('Load Player', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 128, w = 256, h = 16})
 			this.loadbutton.click = function(this)
 				state.current = 'loadplayer'
 			end
 			-- prefs
-			button = this.gui:element(this.gui:button('Prefs', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 96, w = 256, h = 16}))
+			button = this.gui:button('Prefs', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 96, w = 256, h = 16})
 			button.click = function(this)
 				state.prev = state.current
 				state.current = 'prefs'
 			end
 			-- quit
-			button = this.gui:element(this.gui:button('Quit', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 64, w = 256, h = 16}))
+			button = this.gui:button('Quit', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 64, w = 256, h = 16})
 			button.click = function(this)
 				love.event.push('q')
 			end
@@ -67,7 +67,7 @@ local state = {
 			this.backdrop = love.graphics.newImage('gui/prefs.png')
 			this.gui = Gspot()
 			-- quit
-			local button = this.gui:element(this.gui:button('Back', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 64, w = 256, h = 16}))
+			local button = this.gui:button('Back', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 64, w = 256, h = 16})
 			button.click = function(this)
 				state.current = state.prev
 			end
@@ -76,7 +76,7 @@ local state = {
 			local y = 32
 			for i, c in ipairs(ctrl) do
 				local label = this.gui:text(c.label, {x = 336, y = 64 + y, w = 256, h = 16})
-				local input = this.gui:element(this.gui:input('', {x = -80, y = 0, w = 64, h = 16}, label))
+				local input = this.gui:input('', {x = -80, y = 0, w = 64, h = 16}, label)
 				input.value = c.key
 				input.ctrl = i
 				input.keypress = function(this, key, code)
@@ -105,12 +105,12 @@ local state = {
 			this.backdrop = love.graphics.newImage('gui/loadplayer.png')
 			this.gui = Gspot()
 			-- menu
-			button = this.gui:element(this.gui:button('Menu', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 64, w = 256, h = 16}))
+			button = this.gui:button('Menu', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 64, w = 256, h = 16})
 			button.click = function(this)
 				state.current = 'menu'
 			end
 			-- input
-			this.loadinput = this.gui:element(this.gui:input('', {x = 256, y = 256, w = 256, h = 16}))
+			this.loadinput = this.gui:input('', {x = 256, y = 256, w = 256, h = 16})
 			if state.world.saveinput then this.loadinput.value = state.world.saveinput.value end
 			this.loadinput.done = function(this)
 				print('looking for player in : '..this.value..'.sav')
@@ -163,11 +163,11 @@ local state = {
 				end
 			end
 			-- load
-			this.loadbutton = this.gui:element(this.gui:button('Load', {x = 272, y = 0, w = 128, h = 16}, this.loadinput.id))
+			this.loadbutton = this.gui:button('Load', {x = 272, y = 0, w = 128, h = 16}, this.loadinput)
 			this.loadbutton.click = function(this)
 				state.loadplayer.loadinput:done()
 			end
-			this.gui:setfocus(this.loadinput.id)
+			this.gui:setfocus(this.loadinput)
 		end,
 		update = function(this, dt)
 			if not this.gui then this:load() end
@@ -183,7 +183,7 @@ local state = {
 			this.backdrop = love.graphics.newImage('gui/loadmap.png')
 			this.gui = Gspot()
 			-- load
-			this.loadbutton = this.gui:element(this.gui:button('Continue', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 128, w = 256, h = 16}))
+			this.loadbutton = this.gui:button('Continue', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 128, w = 256, h = 16})
 			this.loadbutton.click = function(this)
 				if state.loadmap.selectmap.value then
 					if love.filesystem.isDirectory('/map/'..state.loadmap.selectmap.value) then
@@ -199,18 +199,18 @@ local state = {
 				end
 			end
 			-- prefs
-			button = this.gui:element(this.gui:button('Prefs', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 96, w = 256, h = 16}))
+			button = this.gui:button('Prefs', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 96, w = 256, h = 16})
 			button.click = function(this)
 				state.prev = state.current
 				state.current = 'prefs'
 			end
 			-- menu
-			button = this.gui:element(this.gui:button('Menu', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 64, w = 256, h = 16}))
+			button = this.gui:button('Menu', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 64, w = 256, h = 16})
 			button.click = function(this)
 				state.current = 'menu'
 			end
 			-- select map
-			this.selectmap = this.gui:element(this.gui:scrollgroup('Select Map', {x = 256, y = 64, w = love.graphics.getWidth() - 512, h = 256}))
+			this.selectmap = this.gui:scrollgroup('Select Map', {x = 256, y = 64, w = love.graphics.getWidth() - 512, h = 256})
 			
 			files = love.filesystem.enumerate('/map')
 			local y = 0
@@ -220,7 +220,7 @@ local state = {
 						this.selectmap.value = file
 					end
 					y = y + 16
-					option = this.gui:element(this.gui:option(file, {x = 0, y = y, w = this.selectmap.pos.w, h = 16}, file, this.selectmap.id))
+					option = this.gui:option(file, {x = 0, y = y, w = this.selectmap.pos.w, h = 16}, this.selectmap, file)
 					option.dblclick = function(this)
 						state.loadmap.loadbutton:click()
 					end
@@ -242,13 +242,13 @@ local state = {
 			else this.backdrop = love.graphics.newImage('gui/map.png') end
 			this.gui = Gspot()
 			-- prefs
-			button = this.gui:element(this.gui:button('Prefs', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 96, w = 256, h = 16}))
+			button = this.gui:button('Prefs', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 96, w = 256, h = 16})
 			button.click = function(this)
 				state.prev = state.current
 				state.current = 'prefs'
 			end
 			-- menu
-			button = this.gui:element(this.gui:button('Menu', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 64, w = 256, h = 16}))
+			button = this.gui:button('Menu', {x = love.graphics.getWidth() - 320, y = love.graphics.getHeight() - 64, w = 256, h = 16})
 			button.click = function(this) state.current = 'menu' end
 			
 			if state.mapfile then
@@ -268,7 +268,7 @@ local state = {
 								else
 									obj.img = 'gui/mapportal.png'
 								end
-								button = this.gui:element(this.gui:image(level, {x = obj.x, y = obj.y, w = 64, h = 64}, obj.img))
+								button = this.gui:image(level, {x = obj.x, y = obj.y, w = 64, h = 64}, nil, obj.img)
 								button.click = function(this)
 									state.levelfile = state.mapfile..'/'..this.label
 									world:load(state.levelfile)
@@ -298,17 +298,17 @@ local state = {
 				this.gui = Gspot()
 				
 				-- menu
-				this.menugroup = this.gui:element(this.gui:hidden(nil, {x = love.graphics.getWidth() - 144, y = 0, w = 0, h = 0}))
+				this.menugroup = this.gui:hidden(nil, {x = love.graphics.getWidth() - 144, y = 0, w = 0, h = 0})
 				
 				-- quit
-				button = this.gui:element(this.gui:button('Quit', {x = 0, y = 16, w = 128, h = 16}, this.menugroup.id))
+				button = this.gui:button('Quit', {x = 0, y = 16, w = 128, h = 16}, this.menugroup)
 				button.click = function(this)
 					world:unload()
 					player = classes.player()
 					state.current = 'menu'
 				end
 				-- save input
-				this.saveinput = this.gui:element(this.gui:input('', {x = -272, y = 48, w = 256, h = 16}, this.menugroup.id))
+				this.saveinput = this.gui:input('', {x = -272, y = 48, w = 256, h = 16}, this.menugroup)
 				if state.loadplayer.loadinput then this.saveinput.value = state.loadplayer.loadinput.value end
 				this.saveinput.done = function(this)
 					local p = {hp = player.hp, slot = player.slot}
@@ -328,7 +328,7 @@ local state = {
 					this.display = false
 				end
 				-- save button
-				button = this.gui:element(this.gui:button('Save', {x = 0, y = 48, w = 128, h = 16}, this.menugroup.id))
+				button = this.gui:button('Save', {x = 0, y = 48, w = 128, h = 16}, this.menugroup)
 				button.click = function(this)
 					if state.world.saveinput.display then
 						state.world.saveinput:done()
@@ -338,69 +338,55 @@ local state = {
 					end
 				end
 				-- prefs
-				button = this.gui:element(this.gui:button('Prefs', {x = 0, y = 80, w = 128, h = 16}, this.menugroup.id))
+				button = this.gui:button('Prefs', {x = 0, y = 80, w = 128, h = 16}, this.menugroup)
 				button.click = function(this)
 					state.prev = state.current
 					state.current = 'prefs'
 				end
 				
 				-- hide the menu
-				this.gui:hide(this.menugroup.id)
+				this.menugroup:hide()
 
 				--inventory
-				this.invgroup = this.gui:element(this.gui:group('Inventory', {x = 16, y = 16, w = 256, h = 48}))
+				this.invgroup = this.gui:group('Inventory', {x = 16, y = 16, w = 256, h = 48})
 				this.invgroup.drag = true
 				this.invgroup.load = function(this)
-					local children = this.Gspot:getchildren(this.id)
-					for i, child in ipairs(children) do
-						this.Gspot:rem(child.id)
+				--	for i, element in ipairs(this.Gspot.elements) do
+				--		if element.slot then this.Gspot:rem(element) end
+				--	end
+					this.Gspot:add(this.Gspot:rem(this))
+					--for i, child in ipairs(this.children) do this.Gspot:rem(child) end
+					for i, item in ipairs(player.slot) do
+						if item then this:item(item, i) end
 					end
-					local x = 0
-					for i, slot in ipairs(player.slot) do
-						if slot then
-							local item = this.Gspot:element(this.Gspot:image(slot.q, {x = x, y = 16}, img[slot.img], state.world.invgroup.id))
-							item.display = state.world.invgroup.display
-							item.drag = true
-							item.slot = i
-							item.dblclick = function(this)
-								player:item(nil, this.slot)
-							end
-							item.click = function(this)
-								this.Gspot:stackchildren(this.id)
-								this.parent = nil
-							end
-							item.drop = function(this, bucket)
-								local invgroup = state.world.invgroup
-								if bucket and (bucket == invgroup.id or this.Gspot:element(bucket).slot) then
-									this.parent = invgroup.id
-									i = 8
-									while i > 0 do
-										if love.mouse.getX() >= invgroup.pos.x + ((i - 1) * 32) then
-											this.pos.x = (i - 1) * 32
-											this.pos.y = 16
-											if i ~= this.slot then
-												local item = classes[player.slot[this.slot].item]({q = player.slot[this.slot].q})
-												if player.slot[i] then
-													player.slot[this.slot] = classes[player.slot[i].item]({q = player.slot[i].q})
-												else
-													player.slot[this.slot] = false
-												end
-												player.slot[i] = item
-												this.slot = i
-												invgroup:load()
-											end
-											break
-										end
-										i = i - 1
+				end
+				this.invgroup.item = function(this, item, slot)
+					local item = this.Gspot:image(item.q, {x = (slot - 1) * 32, y = 16}, this, img[item.img])
+					item.display = this.display
+					item.drag = true
+					item.slot = slot
+					item.dblclick = function(this) player:item(nil, this.slot) end
+					item.click = function(this)
+						this:setlevel()
+						this.parent:remchild(this)
+					end
+					item.drop = function(this, bucket)
+						local invgroup = state.world.invgroup
+						if bucket and (bucket == invgroup or bucket.slot) then
+							i = 0
+							while i < 8 do
+								i = i + 1
+								if love.mouse.getX() < invgroup.pos.x + (i * 32) then
+									if i ~= this.slot then
+										table.insert(player.slot, i, table.remove(player.slot, this.slot))
+										table.insert(player.slot, this.slot, table.remove(player.slot, (i < this.slot and i + 1) or i - 1))
 									end
-								elseif not bucket then
-									player:drop(this.slot)
-									this.Gspot:rem(this.id)
-									invgroup:load()
+									break
 								end
 							end
-						end
-						x = x + 32
+						else player:drop(this.slot) end
+						this.Gspot:rem(this)
+						invgroup:load()
 					end
 				end
 			end
@@ -408,6 +394,13 @@ local state = {
 		update = function(this, dt)
 			this.dt = dt
 			if not this.gui then this:load() end
+			if not this.gui.focus then
+				for i, c in pairs(ctrl) do
+					if love.keyboard.isDown(c.key) and c.repeatable then
+						if player[c.cmd] then player[c.cmd](player, dt, c.key) end
+					end
+				end
+			end
 			world:update(dt)
 			this.gui:update(dt)
 		end,
@@ -416,27 +409,32 @@ local state = {
 			this.gui:draw()
 		end,
 		mousepress = function(this, x, y, button)
-			world:mousepress(x, y, button)
+			if not this.gui.mousein then
+				local c = world.cam:worldCoords(vector(x, y))
+				local orig = {x = player.p.x + (player.p.w / 2), y = player.p.y + (player.p.h / 2)}
+				local rel = vector(c.x - orig.x, c.y - orig.y)
+				player:fire(orig, rel:normalized())
+			end
 		end,
 		keypress = function(this, key, code)
 			if not state.world.gui.focus then
 				for i, c in pairs(ctrl) do
 					if key == c.key and not c.repeatable then
 						if player[c.cmd] then player[c.cmd](player, key, c.slot) break
-						elseif this[c.cmd] then this[c.cmd](this, key) break end
+						elseif this[c.cmd] then this[c.cmd](this, key, c.slot) break end
 					end
 				end
 			end
 		end,
 		inv = function(this, key)
-			if this.invgroup.display then this.gui:hide(this.invgroup.id)
-			else this.gui:show(this.invgroup.id) end
+			if this.invgroup.display then this.invgroup:hide()
+			else this.invgroup:show() end
 		end,
 		menu = function(this, key)
-			if this.menugroup.display then this.gui:hide(this.menugroup.id)
+			if this.menugroup.display then this.menugroup:hide()
 			else
-				this.gui:show(this.menugroup.id)
-				this.saveinput.display = false
+				this.menugroup:show()
+				this.saveinput:hide()
 			end
 		end,
 	},

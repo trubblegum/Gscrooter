@@ -70,13 +70,13 @@ def = {
 		end,
 	},
 
-	proj = {
+	bullet = {
 		parent = 'effect',
 		load = function(this, proto, class)
 			class = class or this
 			proto = proto or {}
 			proto.p = classes.position(proto.p, {w = 8, h = 8})
-			proto.type = 'proj'
+			proto.type = 'bullet'
 			proto.img = proto.img or 'bullet.png'
 			proto.v = proto.v or {x = 0, y = 0}
 			proto.age = proto.age or 0
@@ -303,22 +303,22 @@ def = {
 			if this.p.x < ground.p.x then this.p.x = (ground.p.x + ground.p.w) - this.p.w
 			elseif this.p.x + this.p.w > ground.p.x + ground.p.w then this.p.x = ground.p.x end
 			-- collision
-			this.carrier = this:collide('platform')
-			if this.carrier then
+			this.surface = this:collide('platform')
+			if this.surface then
 				-- falling
 				if this.v.y >= 0 then
 					-- landing
-					if (this.p.y + this.p.h) - (this.v.y * dt) <= this.carrier.p.y then
-						this.p.y = this.carrier.p.y - this.p.h
+					if (this.p.y + this.p.h) - (this.v.y * dt) <= this.surface.p.y then
+						this.p.y = this.surface.p.y - this.p.h
 						this.v.y = 0 - math.floor(this.v.y * this.bounce)
-						--this.offset = {x = this.p.x - this.carrier.p.x, y = this.p.y - this.carrier.p.y}
-						--this.p.x = this.carrier.p.x + this.offset.x
-						--this.p.y = this.carrier.p.y + this.offset.y
-					else this.carrier = false end
-				else this.carrier = false end
+						--this.offset = {x = this.p.x - this.surface.p.x, y = this.p.y - this.surface.p.y}
+						--this.p.x = this.surface.p.x + this.offset.x
+						--this.p.y = this.surface.p.y + this.offset.y
+					else this.surface = false end
+				else this.surface = false end
 			end
 			-- gravity
-			if not this.carrier then
+			if not this.surface then
 				if this.v.y < world.gravity * this.mass then this.v.y = math.min(this.v.y + ((world.gravity * this.mass) * dt), world.gravity * this.mass)
 				elseif this.v.y > world.gravity * this.mass then this.v.y = math.max(this.v.y - ((world.gravity * this.mass) * dt), world.gravity * this.mass) end
 			end
@@ -383,9 +383,9 @@ def = {
 			classes.physics.update(this, dt)
 		end,
 		draw = function(this) classes.effect.draw(this) end,
-		use = function(this, obj)
+		use = function(this)
 			this.q = this.q - 1
-			state.world.invgroup:load()
+			if this.q < 1 then this = false end
 		end,
 	},
 	
@@ -404,7 +404,7 @@ def = {
 		use = function(this, obj)
 			obj.hp = math.min(obj.hp + this.healing, obj.ohp)
 			table.insert(world.effects, classes.heal({p = {x = obj.p.x + (obj.p.w / 2), y = obj.p.y}}))
-			classes.item.use(this, obj)
+			classes.item.use(this)
 		end,
 	},
 	
@@ -424,11 +424,9 @@ def = {
 				local target = this:collide('notportal')
 				if (target and target ~= this.orig) or this.age > 3 then
 					table.insert(world.effects, classes.AOEdamage({p = {x = this.p.x + (this.p.w / 2), y = this.p.y}, damage = 128, scale = 2}))
-					local i = 1
-					while i < 9 do
+					for i = 1, 8 do
 						local dir = {x = 1 - (math.random() * 2), y = 1 - (math.random() * 2)}
-						table.insert(world.effects, classes.proj({p = {x = this.p.x, y = this.p.y}, v = dir}))
-						i = i + 1
+						table.insert(world.effects, classes.bullet({p = {x = this.p.x, y = this.p.y}, v = dir}))
 					end
 					world:remeffect(this)
 				end
@@ -438,11 +436,11 @@ def = {
 		use = function(this, obj)
 			local x, y = love.mouse.getX(), love.mouse.getY()
 			local c = world.cam:worldCoords(vector(x, y))
-			local orig = {x = player.p.x + (player.p.w / 2), y = player.p.y + (player.p.h / 2)}
+			local orig = {x = obj.p.x + (obj.p.w / 2), y = obj.p.y + (obj.p.h / 2)}
 			local rel = vector(c.x - orig.x, c.y - orig.y):normalize_inplace()
 			rel = rel * 512
 			table.insert(world.effects, classes.itemgrenade({p = {x = obj.p.x + (obj.p.w / 2), y = obj.p.y}, v = rel, active = true, orig = player}))
-			classes.item.use(this, obj)
+			classes.item.use(this)
 		end,
 	},
 	
@@ -514,7 +512,7 @@ def = {
 		left = function(this, dt) this.v.x = math.max(0 - this.speed, this.v.x + (0 - ((world.gravity + this.speed) * dt))) end,
 		right = function(this, dt) this.v.x = math.min(this.speed, this.v.x + ((world.gravity + this.speed) * dt)) end,
 		jump = function(this, dt)
-			if this.carrier then this.v.y = 0 - (this.speed * 1.5) end
+			if this.surface then this.v.y = 0 - (this.speed * 1.5) end
 		end,
 	},
 

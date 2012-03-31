@@ -68,13 +68,6 @@ local w = {
 		end
 	end,
 	update = function(this, dt)
-		if not state.world.gui.focus then
-			for i, c in pairs(ctrl) do
-				if love.keyboard.isDown(c.key) and c.repeatable then
-					if player[c.cmd] then player[c.cmd](player, dt, c.key) end
-				end
-			end
-		end
 		for i, obj in ipairs(this.effects) do obj:update(dt) end
 		for i, obj in ipairs(this.objects) do obj:update(dt) end
 	end,
@@ -105,10 +98,8 @@ local w = {
 		end
 	end,
 	mousepress = function(this, x, y, button)
-		local c = this.cam:worldCoords(vector(x, y))
-		local orig = {x = player.p.x + (player.p.w / 2), y = player.p.y + (player.p.h / 2)}
-		local rel = vector(c.x - orig.x, c.y - orig.y)
-		player:fire(orig, rel:normalized())
+	end,
+	keypress = function(this, key, code)
 	end,
 }
 

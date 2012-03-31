@@ -1,10 +1,12 @@
 love.load = function()
 	
+	math.randomseed(os.time())
+	
 	vector = require('vector')
 	camera = require('camera')
 	TS = require('Tserial')
 	Gspot = require('Gspot')
-
+	
 	img = {}
 	snd = {
 		click = love.audio.newSource('snd/click.ogg', 'static'),
@@ -26,11 +28,11 @@ love.load = function()
 		{key = '8', cmd = 'item', label = 'Slot 8', slot = 8},
 		{key = 'escape', cmd = 'menu', label = 'Open / Close Menu'},
 	}
-
+	
 	state = require('state')
 	world = require('world')
 	classes = require('class')
-
+	
 	
 	classes:load('defsdefault.lua')
 	player = classes.player()
