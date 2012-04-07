@@ -123,10 +123,10 @@ local state = {
 						end
 					end
 					if success then
-						for i, slot in pairs(player.slot) do
+						for i, slot in ipairs(player.slot) do
 							if slot then
 								if classes[slot.item] or classes:load(nil, {def = slot.item}) then
-									slot = classes[slot.item](slot)
+									player.slot[i] = classes[slot.item](slot)
 									print('loaded inventory slot ' .. i)
 								else print('failed to load inventory item object def') end
 							end
